@@ -1,0 +1,2846 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" data-howto-hidden="">
+
+<head>
+    <script id="frame-guard">
+        (function() {
+            if (window.top === window.self) return;
+            var allowed = ['x282665.com', 'www.x282665.com'];
+            var host = '';
+            try {
+                host = window.top.location.hostname;
+            } catch (e) {
+                var a = location.ancestorOrigins;
+                if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+                else if (document.referrer) host = new URL(document.referrer).hostname;
+            }
+            if (allowed.indexOf(host) !== -1) return;
+            if (window.stop) window.stop();
+            var url = location.origin + location.pathname;
+            document.documentElement.innerHTML =
+                '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+                '<p>このゲームは作者に無断で掲載されています。</p>' +
+                '<p>正規の公開ページ：<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a></p></body>';
+        })();
+    </script>
+
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-41RSZLP1YQ');
+    </script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>転がりチーズ</title>
+    <meta name="description" content="坂を転がるチーズで追っ手から逃げる" />
+    <style>
+        :root {
+            --bg: #a9cdea;
+            --fg: #1d2b1d;
+            --sub: #4a5a4a;
+            --line: #d9d9d9;
+            --panel: #ffffff;
+            --sky: #a9cdea;
+            --grass: #5f8f3e;
+            --grass-dark: #4c7731;
+            --cheese-rind: #e3a03a;
+            --cheese-face: #f3cf72;
+            --fence: #7a5a3a;
+            --skins: #f1c9a5, #e0ac85, #c68a62, #8d5a3b;
+            --shirts: #f2f2f2, #c93a3a, #2f5fbf, #3a8a4a, #262626, #e0b52e, #7a3fae, #e07a2c, #4fa3c7, #b8b8b8;
+            --pants: #2f3b55, #3a3a3a, #5a6b7d, #4b3a2a, #22304a, #6b6b52;
+            --hair: #2a1d14, #5a3a22, #a87a4a, #161616, #cdb27a;
+            --shoes: #eeeeee, #2e2e2e, #7a3b2a, #3a4a6a;
+            --rock: #8c8a82;
+            --bark: #6b4a2f;
+            --wood: #c9a574;
+            --straw: #d8b55a;
+            --gorse: #34502a;
+            --gorse-light: #6f8f3c;
+            --gorse-flower: #efc72c;
+            --trail: #fff4d6;
+            --res-panel: #1f3524;
+            --res-fg: #ffffff;
+            --res-sub: #a9c4a4;
+            --res-num: #ffd23f;
+            --res-btn-fg: #1f3524;
+            --badge: #e8483c;
+            --howto-bg: #1f3524;
+            --howto-fg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        #game {
+            position: fixed;
+            inset: 0
+        }
+
+        canvas {
+            display: block;
+            touch-action: none
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        #joy {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 120px;
+            height: 120px;
+            margin: -60px 0 0 -60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .22);
+            border: 2px solid rgba(255, 255, 255, .7);
+            pointer-events: none
+        }
+
+        #knob {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 52px;
+            height: 52px;
+            margin: -26px 0 0 -26px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .9)
+        }
+
+        #hud {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(env(safe-area-inset-top, 0px) + 16px);
+            text-align: center;
+            font-size: 34px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            pointer-events: none
+        }
+
+        #over {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .35);
+            touch-action: none
+        }
+
+        #over .result-ad {
+            margin-bottom: 30px
+        }
+
+        /* ボタンまで150px以上あける */
+        #over .box {
+            width: min(calc(100% - 24px), 344px);
+            background: var(--res-panel);
+            color: var(--res-fg);
+            border-radius: 16px;
+            padding: 24px 20px 20px;
+            text-align: center
+        }
+
+        #result {
+            font-size: 56px;
+            font-weight: 800;
+            margin: 4px 0 4px;
+            color: var(--res-num);
+            font-variant-numeric: tabular-nums
+        }
+
+        #best-line {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--res-sub);
+            margin-bottom: 16px;
+            font-variant-numeric: tabular-nums
+        }
+
+        /* 最高記録を更新したとき：数字が弾んで出て、文字ははっきりした色のバッジ */
+        #result.new {
+            animation: resultpop .7s ease-out
+        }
+
+        @keyframes resultpop {
+            0% {
+                transform: scale(.4)
+            }
+
+            45% {
+                transform: scale(1.25)
+            }
+
+            70% {
+                transform: scale(.95)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        #best-line.new {
+            display: inline-block;
+            background: var(--badge);
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 999px;
+            animation: badgepulse .8s ease-in-out infinite alternate
+        }
+
+        @keyframes badgepulse {
+            0% {
+                transform: scale(1)
+            }
+
+            100% {
+                transform: scale(1.08)
+            }
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            min-height: 56px;
+            margin-top: 10px;
+            border: 0;
+            border-radius: 12px;
+            font: inherit;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            touch-action: manipulation
+        }
+
+        #retry {
+            background: var(--res-num);
+            color: var(--res-btn-fg)
+        }
+
+        #share {
+            background: var(--res-fg);
+            color: var(--res-btn-fg)
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid #1a6dd6;
+            outline-offset: 2px
+        }
+
+        #over .btn:focus-visible {
+            outline-color: var(--res-fg)
+        }
+
+        #share-view {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .5)
+        }
+
+        #share-view .panel {
+            width: min(90%, 340px);
+            max-height: 94%;
+            overflow: auto;
+            touch-action: pan-y;
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 16px
+        }
+
+        #share-img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px
+        }
+
+        #share-text {
+            white-space: pre-wrap;
+            word-break: break-all;
+            -webkit-user-select: text;
+            user-select: text;
+            font-size: 15px;
+            margin: 12px 0
+        }
+
+        #share-close {
+            background: #ececec;
+            color: var(--fg)
+        }
+
+        .howto-open {
+            width: auto;
+            min-height: 44px;
+            touch-action: none
+        }
+    </style>
+    <style>
+        .howto-open {
+            position: absolute;
+            z-index: 1000;
+            min-width: 44px;
+            height: 44px;
+            padding: 0 14px;
+            margin: 0;
+            border: 0;
+            border-radius: 22px;
+            font: bold 13px/1 "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+            background: var(--howto-bg, #181818);
+            color: var(--howto-fg, #eee);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        html[data-howto-hidden] .howto-open {
+            display: none
+        }
+
+        .howto-open[data-pos="top-left"] {
+            top: calc(env(safe-area-inset-top, 0px) + 10px);
+            left: calc(env(safe-area-inset-left, 0px) + 10px)
+        }
+
+        .howto-open[data-pos="top-right"] {
+            top: calc(env(safe-area-inset-top, 0px) + 10px);
+            right: calc(env(safe-area-inset-right, 0px) + 10px)
+        }
+
+        .howto-open[data-pos="bottom-left"] {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+            left: calc(env(safe-area-inset-left, 0px) + 10px)
+        }
+
+        .howto-open[data-pos="bottom-right"] {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+            right: calc(env(safe-area-inset-right, 0px) + 10px)
+        }
+
+        .howto-dialog {
+            width: min(calc(100vw - 32px), 420px);
+            max-height: calc(100dvh - 48px);
+            padding: 0;
+            border: 0;
+            border-radius: 16px;
+            font: 15px/1.7 "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+            background: var(--howto-bg, #181818);
+            color: var(--howto-fg, #eee);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+        }
+
+        .howto-dialog[open] {
+            display: flex;
+            flex-direction: column
+        }
+
+        .howto-dialog::backdrop {
+            background: rgba(0, 0, 0, .5)
+        }
+
+        .howto-dialog .howto {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            padding: 24px 24px 8px;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .howto-dialog h2 {
+            margin: 20px 0 4px;
+            font-size: 16px;
+            line-height: 1.4
+        }
+
+        .howto-dialog h2:first-child {
+            margin-top: 0
+        }
+
+        .howto-dialog p {
+            margin: 0
+        }
+
+        .howto-dialog .howto-home {
+            margin-top: 12px
+        }
+
+        .howto-dialog .howto-home a {
+            display: inline-block;
+            padding: 10px 0;
+            color: inherit;
+            font-weight: bold;
+            text-decoration: underline
+        }
+
+        .howto-close {
+            flex: none;
+            display: block;
+            width: calc(100% - 48px);
+            min-height: 44px;
+            margin: 12px 24px 20px;
+            padding: 0;
+            border: 1px solid currentColor;
+            border-radius: 22px;
+            background: transparent;
+            color: inherit;
+            font: bold 15px/1 "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+    </style>
+    <style>
+        .result-ad {
+            flex: none;
+            display: block;
+            box-sizing: content-box;
+            width: 320px;
+            margin: 0 calc((100% - 320px) / 2) 20px;
+            text-align: left;
+        }
+
+        .result-ad[hidden] {
+            display: none
+        }
+
+        .result-ad-label {
+            display: block;
+            height: 16px;
+            font: 11px/16px system-ui, sans-serif;
+            letter-spacing: 0;
+            opacity: .6
+        }
+
+        .result-ad-slot {
+            display: block;
+            width: 320px;
+            height: 100px;
+            overflow: hidden
+        }
+
+        .result-ad-slot ins {
+            display: block;
+            width: 320px;
+            height: 100px
+        }
+
+        .result-ad[data-mode="local"] .result-ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            border: 1px dashed currentColor;
+            opacity: .5;
+            font: 12px/1 system-ui, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game"><canvas width="2746" height="1736" style="display: block; width: 1373px; height: 868px;"></canvas>
+        <div id="hud">74 m</div>
+        <div id="joy" class="hidden" aria-hidden="true">
+            <div id="knob"></div>
+        </div>
+        <div id="over" class="hidden">
+            <div class="box">
+                <div class="result-ad" data-mode="live" style="visibility: hidden;"><span class="result-ad-label">広告</span>
+                    <div class="result-ad-slot"></div>
+                </div>
+                <div id="result" aria-live="polite"></div>
+                <div id="best-line"></div>
+                <button id="share" class="btn" type="button">共有</button>
+                <button id="retry" class="btn" type="button">もう一回</button>
+            </div>
+        </div>
+        <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+            <div class="panel">
+                <img id="share-img" alt="共有される結果画像" />
+                <p id="share-text"></p>
+                <button id="share-close" class="btn" type="button">閉じる</button>
+            </div>
+        </div>
+        <button type="button" class="howto-open" data-howto-open="" data-pos="top-left">遊び方</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        (() => {
+            'use strict';
+            const $ = id =>
+            document.getElementById(id);
+            const css = n =>
+            getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+            const list = n =>
+            css(n).split(',').map(s => s.trim());
+            const clamp = (v, a, b) =>
+            v <
+            a ? a : v >
+            b ? b : v;
+            const lerp = (a, b, t) =>
+            a + (b - a) * t;
+            const frac = x =>
+            x - Math.floor(x);
+            const smooth = t =>
+            t * t * (3 - 2 * t);
+            const TAU = Math.PI * 2;
+
+            // ---------- 定数 ----------
+            // 坂とチーズ
+            const SLOPE = 0.9; // 坂の傾き（1m下るごとに何m低くなるか。約42度）
+            const G = 9.8; // 重力加速度（m/s²）
+            const G_ALONG = G * Math.sin(Math.atan(SLOPE)); // 坂に沿ってチーズを加速させる力（m/s²）
+            const DRAG = 0.073; // チーズの抵抗（速さ²にかける係数）。終端速度は約9.5m/s
+            const TURN_COST = 0.1; // 横に動くと失う前進の速さ（横速度1m/sあたり、毎秒m/s）
+            const CHEESE_R = 0.32; // チーズの半径（m）
+            const CHEESE_W = 0.2; // チーズの厚み（m）
+            const VX_MAX = 4.5; // チーズの横移動の最高速度（m/s）
+            const LAT_ACC = 22; // チーズの横速度が変わる速さ（m/s²）
+            const BOUNCE = 0.3; // 着地したときのはね返り（0〜1）
+            const BOUNCE_MIN = 1.2; // この速さ（m/s）以上で地面に当たったときだけはねる
+            const TILT_KICK = 0.35; // はねたときのチーズの傾きの乱れ（強く当たるほど大きい）
+            const TILT_SPRING = 30; // 傾きが戻る強さ
+            const TILT_DAMP = 4; // 傾きの揺れの減り方
+            const TILT_DRIFT = 3; // 傾いた方へ曲がっていく強さ（m/s²/rad）
+            const HALF_W = 8; // コースの半分の幅（柵までの距離、m）
+            const XLIM = HALF_W - CHEESE_W / 2 - 0.1; // チーズが動ける横の限界（m）
+            const JOY_R = 50; // ジョイスティックを倒しきる距離（px）
+            const JOY_DEAD = 0.12; // これより小さい倒し方は無視する（0〜1）
+            const PUSH_ACC = 0.6; // ジョイスティックを上に倒したときに足される加速（m/s²）。倒し続けても最高約9.9m/sで、人の最高速度より遅い
+            const BOOST_ACC = 4.0; // Zキーを押している間に足される追加加速（m/s²）
+            const BRAKE_ACC = 6; // 下に倒したときのブレーキ（m/s²）
+            const AIR_CONTROL = 0.6; // チーズが浮いている間の操作の効き（0〜1）
+
+            // 追いかける人
+            const CH_START = 6; // 最初の人数
+            const CH_MAX = 12; // 最大人数
+            const CH_ADD_EVERY = 100; // この距離（m）進むごとに1人増える
+            const START_DELAY = 1.0; // チーズが転がり出してから人が走り出すまで（秒）
+            const START_GRACE = 2.0; // 走り出してからこの時間（秒）は飛びつかない
+            const RUN_MAX0 = 10.4; // 人の最高速度（m/s）
+            const RUN_MAX_GROW = 0.001; // 進んだ距離1mごとに最高速度が増える量（m/s）
+            const GAIN0 = 1.3; // チーズより速く走れる量の上限（m/s）
+            const GAIN_GROW = 0.0005; // 進んだ距離1mごとに上の値が増える量（m/s）
+            const CATCHUP_DIST = 10; // これ以上離されると全力で追い上げる（m）
+            const CATCHUP = 3; // 追い上げで足される速さ（m/s）
+            const RUN_ACC = 7; // 人の加速の速さ（m/s²）
+            const CH_VX = 3.2; // 人の横移動の最高速度（m/s）
+            const SPEED_VAR = 0.3; // 人ごとの速さのばらつき（±m/s）
+            const DIVE_RANGE = 3.0; // チーズがこの距離（m）より前にいると飛びつく
+            const DIVE_BACK = 0.5; // チーズがこの距離（m）までなら後ろにいても飛びつく
+            const DIVE_DX = 2.2; // 横にこの距離（m）以内なら飛びつく
+            const WINDUP = 0.2; // 飛びつく前のかまえ（秒）
+            const DIVE_T = 0.42; // 飛びつきでチーズの位置に届くまでの時間（秒）
+            const DIVE_REACH = 0.9; // 飛びついたとき腰から手の先までの前後の長さ（m）
+            const DIVE_SPIN = 2.2; // 飛びつくときの前に倒れる回転（rad/s）
+            const AIM = 0.7; // チーズの横の動きをどれだけ先読みするか（0〜1）
+            const CATCH_HAND = CHEESE_R + 0.2; // 手がチーズの中心にこの距離（m）まで近づくと捕まる
+            const CATCH_BODY = CHEESE_R + 0.25; // 胴がチーズの中心にこの距離（m）まで近づくと捕まる
+            const CATCH_WINDOW = DIVE_T + 0.35; // 飛びついてから捕まえられる時間（秒）
+            const CATCH_HEIGHT = 0.8; // チーズが地面からこれ以上浮いていると捕まらない（m）
+            const RAG_MIN = 1.0; // 転がってから起き上がるまでの最短時間（秒）
+            const RAG_MAX = 2.6; // これ以上転がったら速さに関係なく起き上がる（秒）
+            const RAG_STILL = 2.5; // この速さ（m/s）より遅くなったら起き上がれる
+            const GETUP_T = 0.6; // 起き上がる時間（秒）
+            const COOLDOWN = 0.8; // 起き上がってから次に飛びつけるまで（秒）
+            const RESPAWN_BEHIND = 30; // これ以上遅れた人は後ろから走り直す（m）
+            const SPAWN_BEHIND = 22; // 走り直す人・増えた人が出てくる位置（チーズの何m後ろ）
+            const OVER_DELAY = 2.2; // 捕まってから結果が出るまで（実際の秒）
+            const SLOW_SCALE = 0.25; // 捕まったあとの時間の進み方（1=ふつう）
+            const ZOOM_SPEED = 3; // 捕まったあとカメラが寄る速さ（1/秒）
+            const ZOOM_BACK = 3.0; // 寄ったカメラのチーズからの後ろの距離（m）
+            const ZOOM_UP = 1.8; // 寄ったカメラの坂の面からの高さ（m）
+            const ZOOM_SIDE = 1.3; // 寄ったカメラの横へのずれ（m）
+
+            // ラグドール（点と棒でできた体。点の動きを重力・地面・棒の長さで解く）
+            const RAG_ITER = 8; // 棒の長さを合わせる繰り返し回数
+            const RAG_DAMP = 0.999; // 空気の抵抗（1ステップで残る速さの割合）
+            const RAG_MU = 0.85; // 地面との摩擦（坂の傾き0.9より少し小さいので、転ぶと坂をゆっくり滑り落ちていく）
+            const RUN_DUTY = 0.28; // 走りで片足が地面に着いている割合
+            const THIGH = 0.43,
+                SHIN = 0.43; // 腿・脛の長さ（m）
+            const UPARM = 0.29,
+                FOREARM = 0.27; // 上腕・前腕（手の中心まで）の長さ（m）
+            const FOOT_H = 0.07; // 足首の高さ（m）
+
+            // 障害物
+            const OB_BAND = 4; // 障害物を置く区切りの長さ（m）
+            const OB_START = 25; // スタートからこの距離（m）までは置かない
+            const OB_RATE0 = 0.6; // 区切りに障害物が出る確率（最初）
+            const OB_RATE_GROW = 1 / 500; // 進んだ距離1mごとに上の確率が増える量
+            const OB_RATE_MAX = 1; // 上の確率の上限
+            const OB_SECOND = 1 / 600; // 2個目が出る確率（進んだ距離1mごとに増える量）
+            const OB_KIND = [
+                ['rock', 0.3],
+                ['bush', 0.25],
+                ['log', 0.25],
+                ['bale', 0.2]
+            ]; // 種類と出やすさ
+            const OB_AHEAD = 90; // チーズの何m先まで障害物を置いておくか
+            const OB_BEHIND = 30; // チーズの何m後ろで障害物を片付けるか
+            const ROCK_VARIANTS = 5; // 岩の形の種類
+            const BUSH_VARIANTS = 3; // 茂みの形の種類
+            const BUSH_SPIKES = 340; // 茂み1つのトゲ状の枝の数
+            const BUSH_FLOWERS = 60; // 茂み1つの黄色い花の数
+            const OB_BOUNCE = 0.35; // 障害物に当たったチーズのはね返り（0〜1）
+            const OB_LOSS = 0.8; // 障害物に当たったチーズに残る速さの割合
+            const BUSH_DRAG = 6; // 茂みの中でチーズが遅くなる強さ（m/s²）
+            const BUSH_RUN = 0.55; // 茂みの中を走る人の速さの割合
+            const TRIP_MARGIN = 0.25; // 人の足がこの距離（m）まで近づくとつまずく
+            const TRIP_SPIN = 3.5; // つまずいて前に倒れる回転（rad/s）
+            const TRIP_HOP = 1.0; // つまずいたときに体が浮く速さ（m/s）
+            const TRIP_COOL = 1.0; // 起き上がってからこの時間（秒）はつまずかない
+            const AVOID_LOOK = 6; // 人がこの距離（m）先までの障害物を見てよける
+            const SKILL_MIN = 0.3,
+                SKILL_MAX = 0.9; // 人が障害物に気づく確率の幅
+
+            const STEP = 1 / 120; // 物理計算の刻み（秒）
+
+            // チーズの軌跡（トレイル）
+            const TRAIL_SPEED = 9.2; // チーズがこの速さ（m/s）を超えると軌跡が出る
+            const TRAIL_FADE = 0.6; // 上の速さからこれだけ（m/s）速くなると軌跡が一番濃くなる
+            const TRAIL_N = 36; // 軌跡の点の数
+            const TRAIL_STEP = 0.15; // 軌跡の点の間隔（m）
+            const TRAIL_ALPHA = 0.55; // 軌跡の一番濃いところの不透明度（0〜1）
+            const TRAIL_TAPER = 0.6; // 軌跡の端でどれだけ細くなるか（0=細くならない、1=端で0）
+
+            // 地形
+            const CHUNK_LEN = 25; // 地形1枚の長さ（m）
+            const CHUNK_SEG_S = 50; // 地形1枚の縦の分割数
+            const TERRAIN_HALF = 22; // 地形の半分の幅（m）
+            const TERRAIN_SEG_X = 66; // 地形の横の分割数
+            const OUTSIDE_SHADE = 0.55; // 柵の外側の地面の明るさ（コースの中を1として）
+            const CHUNK_COUNT = 5; // 使い回す地形の枚数
+            const CHUNK_BEHIND = 20; // チーズの後ろに地形を残す長さ（m）
+            const GRASS_TILE = 2; // 草のテクスチャ1枚の大きさ（m）
+            const POST_GAP = 2.5; // 柵の杭の間隔（m）
+            const FOG_NEAR = 30,
+                FOG_FAR = 75; // 霧のかかり始めと終わり（m）
+            const SHADOW_SIZE = 14; // 影を落とす範囲（チーズから前後左右の距離、m）
+
+            // カメラ
+            const CAM_BACK = 8; // チーズの何m後ろから見るか（低いと後ろの人でチーズが隠れる）
+            const CAM_UP = 5; // 坂の面から何m上から見るか
+            const CAM_LOOK = -1.5; // 注視点（チーズからの前後、m。マイナスは後ろ）
+            const CAM_FOLLOW_X = 0.75; // チーズの横移動にカメラがどれだけ付いていくか（0〜1）
+            const CAM_HFOV = 60; // 横の画角の目標（度）
+            const CAM_VFOV_MAX = 65; // 縦の画角の上限（度）
+
+            // ---------- 地形の形 ----------
+            // 本物のチーズ転がしの丘のように凸凹が多い。チーズは小さい凸凹でもよくはねる
+            function bump(x, s) {
+                return 0.5 * Math.sin(0.31 * s + 1.4 * Math.sin(0.043 * s)) * (0.75 + 0.25 * Math.sin(0.37 * x + 0.11 * s)) +
+                    0.14 * Math.sin(0.83 * s + 0.6 * x + 2.0) +
+                    0.08 * Math.sin(1.37 * s - 0.9 * x + 0.5) +
+                    0.12 * Math.sin(0.23 * x - 0.17 * s) +
+                    0.03 * Math.sin(2.1 * s + 1.7 * x);
+            }
+            const ground = (x, s) => - SLOPE * s + bump(x, s);
+            const EPS = 0.04;
+            const slopeS = (x, s) =>
+            (bump(x, s + EPS) - bump(x, s - EPS)) / (2 * EPS) - SLOPE;
+            const slopeX = (x, s) =>
+            (bump(x + EPS, s) - bump(x - EPS, s)) / (2 * EPS);
+
+            // ---------- 状態 ----------
+            let game = 'playing'; // playing / caught / over
+            // 最高記録（保存できない環境でも遊べるように try で囲む）
+            const BEST_KEY = 'runawayCheese.best';
+            let best = 0;
+            try {
+                best = Math.max(0, Math.floor(Number(localStorage.getItem(BEST_KEY)) || 0));
+            } catch (e) {
+                best = 0;
+            }
+
+            function saveBest(v) {
+                try {
+                    localStorage.setItem(BEST_KEY, String(v));
+                } catch (e) {}
+            }
+            let S0 = 0; // 描画の基準（チーズの位置）。大きな座標のまま描くと崩れるので、全部ここからの差で描く
+            let overT = 0;
+            const stick = {
+                x: 0,
+                y: 0
+            }; // ジョイスティックの倒し方（x:右が+、y:上が+、-1〜1）
+            let activeN = 0;
+            let shownDist = -1;
+            let maxDist = 0;
+            const cheese = {
+                s: 0,
+                x: 0,
+                y: 0,
+                v: 0,
+                vx: 0,
+                vy: 0,
+                rot: 0,
+                tilt: 0,
+                tiltV: 0,
+                grounded: true,
+                held: null,
+                hand: 0
+            };
+            const keys = {
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                boost: false
+            };
+
+            // ---------- three.js ----------
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            $('game').prepend(renderer.domElement);
+            const cv = renderer.domElement;
+            // CSSの色（sRGB）を、光の計算に使う色（リニア）に直す
+            const lin = c =>
+            new THREE.Color(c).convertSRGBToLinear();
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(css('--sky'));
+            scene.fog = new THREE.Fog(new THREE.Color(css('--sky')), FOG_NEAR, FOG_FAR); // 霧は色の変換の後にかかるので、CSSの色そのまま
+            const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 200);
+            scene.add(new THREE.HemisphereLight(lin('#d6e8ff'), lin('#55703a'), 0.75));
+            const sun = new THREE.DirectionalLight(lin('#fff3e0'), 1.5);
+            sun.castShadow = true;
+            sun.shadow.mapSize.set(2048, 2048);
+            Object.assign(sun.shadow.camera, {
+                left: -SHADOW_SIZE,
+                right: SHADOW_SIZE,
+                top: SHADOW_SIZE,
+                bottom: -SHADOW_SIZE,
+                near: 1,
+                far: 60
+            });
+            sun.shadow.bias = -0.0004;
+            sun.shadow.normalBias = 0.03;
+            scene.add(sun, sun.target);
+
+            const UP = new THREE.Vector3(0, 1, 0);
+            // 坂の上の位置（s:下り方向の距離, x:横, y:高さ）を、描画用の小さな座標に直す
+            const rel = (out, s, x, y) =>
+            out.set(x, y + SLOPE * S0, -(s - S0));
+
+            // ---------- テクスチャ（1画素ずつ計算する。グラデーションは拡大するとノイズになる） ----------
+            function rand(seed) {
+                let t = seed >>>
+                0;
+                return () => {
+                    t = (t + 0x6D2B79F5) >>>
+                    0;
+                    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+                    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+                    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+                };
+            }
+            // つなぎ目なく並べられる滑らかなノイズ
+            function tileNoise(S, cells, rnd) {
+                const g = new Float32Array(cells * cells).map(() => rnd());
+                const out = new Float32Array(S * S);
+                for (let y = 0; y < S; y++)
+                    for (let x = 0; x < S; x++) {
+                        const fx = x / S * cells,
+                            fy = y / S * cells;
+                        const x0 = Math.floor(fx),
+                            y0 = Math.floor(fy),
+                            tx = smooth(fx - x0),
+                            ty = smooth(fy - y0);
+                        const a = g[(y0 % cells) * cells + x0 % cells],
+                            b = g[(y0 % cells) * cells + (x0 + 1) % cells];
+                        const c = g[((y0 + 1) % cells) * cells + x0 % cells],
+                            d = g[((y0 + 1) % cells) * cells + (x0 + 1) % cells];
+                        out[y * S + x] = lerp(lerp(a, b, tx), lerp(c, d, tx), ty);
+                    }
+                return out;
+            }
+
+            function canvasTex(S, H, fn) {
+                const c = document.createElement('canvas');
+                c.width = S;
+                c.height = H;
+                const g = c.getContext('2d'),
+                    img = g.createImageData(S, H);
+                fn(img.data);
+                g.putImageData(img, 0, 0);
+                const t = new THREE.CanvasTexture(c);
+                t.encoding = THREE.sRGBEncoding;
+                return t;
+            }
+            // 草：細かい葉の筋と、ムラ
+            function grassTexture() {
+                const S = 256,
+                    rnd = rand(7);
+                const base = new THREE.Color(css('--grass')),
+                    dark = new THREE.Color(css('--grass-dark'));
+                const n1 = tileNoise(S, 4, rnd),
+                    n2 = tileNoise(S, 16, rnd);
+                const lum = new Float32Array(S * S);
+                for (let i = 0; i < S * S; i++) lum[i] = 0.55 * n1[i] + 0.45 * n2[i] + (rnd() - 0.5) * 0.25;
+                for (let k = 0; k < 9000; k++) {
+                    const x0 = Math.floor(rnd() * S),
+                        y0 = Math.floor(rnd() * S),
+                        len = 3 + Math.floor(rnd() * 9);
+                    const slant = (rnd() - 0.5) * 0.6,
+                        sh = (rnd() - 0.45) * 0.7;
+                    for (let t = 0; t < len; t++) {
+                        const x = (x0 + Math.round(t * slant) + S) % S,
+                            y = (y0 - t + S) % S;
+                        lum[y * S + x] += sh * (1 - t / len);
+                    }
+                }
+                const t = canvasTex(S, S, d => {
+                    for (let i = 0; i < S * S; i++) {
+                        const v = clamp(lum[i], 0, 1);
+                        d[i * 4] = Math.round(255 * lerp(dark.r, base.r * 1.15, v));
+                        d[i * 4 + 1] = Math.round(255 * lerp(dark.g, base.g * 1.12, v));
+                        d[i * 4 + 2] = Math.round(255 * lerp(dark.b, base.b * 1.05, v));
+                        d[i * 4 + 3] = 255;
+                    }
+                });
+                t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                return t;
+            }
+            // チーズの皮：まだら
+            function rindTexture() {
+                const S = 256,
+                    H = 64,
+                    rnd = rand(11),
+                    c = new THREE.Color(css('--cheese-rind'));
+                const n = tileNoise(S, 32, rnd);
+                return canvasTex(S, H, d => {
+                    for (let y = 0; y < H; y++)
+                        for (let x = 0; x < S; x++) {
+                            const k = 0.82 + 0.25 * n[(y * 4 % S) * S + x] + (rnd() - 0.5) * 0.08;
+                            const i = (y * S + x) * 4;
+                            d[i] = Math.round(255 * clamp(c.r * k, 0, 1));
+                            d[i + 1] = Math.round(255 * clamp(c.g * k, 0, 1));
+                            d[i + 2] = Math.round(255 * clamp(c.b * k, 0, 1));
+                            d[i + 3] = 255;
+                        }
+                });
+            }
+            // チーズの面：中は明るく、縁は皮の色
+            function faceTexture() {
+                const S = 128,
+                    rnd = rand(13),
+                    face = new THREE.Color(css('--cheese-face')),
+                    rind = new THREE.Color(css('--cheese-rind'));
+                const n = tileNoise(S, 16, rnd);
+                return canvasTex(S, S, d => {
+                    for (let y = 0; y < S; y++)
+                        for (let x = 0; x < S; x++) {
+                            const dx = (x + 0.5) / S * 2 - 1,
+                                dy = (y + 0.5) / S * 2 - 1,
+                                r = Math.sqrt(dx * dx + dy * dy);
+                            const base = r >
+                            0.9 ? rind : face;
+                            const k = 0.9 + 0.15 * n[y * S + x] + (rnd() - 0.5) * 0.05;
+                            const i = (y * S + x) * 4;
+                            d[i] = Math.round(255 * clamp(base.r * k, 0, 1));
+                            d[i + 1] = Math.round(255 * clamp(base.g * k, 0, 1));
+                            d[i + 2] = Math.round(255 * clamp(base.b * k, 0, 1));
+                            d[i + 3] = 255;
+                        }
+                });
+            }
+
+            // ---------- 地形 ----------
+            const NX = TERRAIN_SEG_X,
+                NS = CHUNK_SEG_S,
+                VN = (NX + 1) * (NS + 1);
+            const terrainIdx = [];
+            for (let j = 0; j < NS; j++)
+                for (let i = 0; i < NX; i++) {
+                    const a = j * (NX + 1) + i,
+                        b = a + NX + 1,
+                        c = a + 1,
+                        d = b + 1;
+                    terrainIdx.push(a, c, b, c, d, b);
+                }
+            const terrainMat = new THREE.MeshStandardMaterial({
+                map: grassTexture(),
+                vertexColors: true,
+                roughness: 1,
+                metalness: 0
+            });
+            const chunks = [];
+            for (let k = 0; k < CHUNK_COUNT; k++) {
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(VN * 3), 3));
+                geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(VN * 3), 3));
+                geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(VN * 3), 3));
+                geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(VN * 2), 2));
+                geo.setIndex(terrainIdx);
+                const mesh = new THREE.Mesh(geo, terrainMat);
+                mesh.frustumCulled = false;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+                chunks.push({
+                    mesh,
+                    k: null
+                });
+            }
+            // 地形1枚を作る。頂点は1枚の先頭からの差で持つ（座標が大きくならない）
+            function buildChunk(ch, k) {
+                ch.k = k;
+                const s0 = k * CHUNK_LEN;
+                const uv0 = (((s0 % 100) + 100) % 100) / GRASS_TILE; // 100mごとに巻き戻しても草の模様はつながる
+                const geo = ch.mesh.geometry;
+                const p = geo.attributes.position.array,
+                    n = geo.attributes.normal.array;
+                const col = geo.attributes.color.array,
+                    uv = geo.attributes.uv.array;
+                let q = 0,
+                    u = 0;
+                for (let j = 0; j <= NS; j++) {
+                    const s = s0 + j * CHUNK_LEN / NS;
+                    for (let i = 0; i <= NX; i++) {
+                        const x = -TERRAIN_HALF + i * 2 * TERRAIN_HALF / NX;
+                        p[q] = x;
+                        p[q + 1] = bump(x, s) - SLOPE * (s - s0);
+                        p[q + 2] = -(s - s0);
+                        // 法線は式から出す（1枚ずつ計算すると継ぎ目で陰がずれるため）
+                        const gx = slopeX(x, s),
+                            gs = slopeS(x, s),
+                            L = Math.hypot(gx, 1, gs);
+                        n[q] = -gx / L;
+                        n[q + 1] = 1 / L;
+                        n[q + 2] = gs / L;
+                        // コースの外は少し暗い（踏まれていない草）。大きなムラもここで付ける
+                        const out = Math.abs(x) >
+                        HALF_W ? OUTSIDE_SHADE : 1; // 柵より外は暗い
+                        const shade = out * (0.9 + 0.1 * Math.sin(x * 0.7 + s * 0.31) * Math.sin(s * 0.13 - x * 0.4));
+                        col[q] = col[q + 1] = col[q + 2] = shade;
+                        uv[u] = x / GRASS_TILE;
+                        uv[u + 1] = uv0 + (s - s0) / GRASS_TILE;
+                        q += 3;
+                        u += 2;
+                    }
+                }
+                for (const a of ['position', 'normal', 'color', 'uv']) geo.attributes[a].needsUpdate = true;
+            }
+
+            function updateChunks() {
+                const k0 = Math.floor((S0 - CHUNK_BEHIND) / CHUNK_LEN);
+                for (const ch of chunks)
+                    if (ch.k === null || ch.k < k0 || ch.k >= k0 + CHUNK_COUNT) ch.k = null;
+                for (let k = k0; k < k0 + CHUNK_COUNT; k++) {
+                    if (!chunks.some(ch => ch.k === k)) buildChunk(chunks.find(ch => ch.k === null), k);
+                }
+                for (const ch of chunks) {
+                    const s0 = ch.k * CHUNK_LEN;
+                    ch.mesh.position.set(0, -SLOPE * (s0 - S0), -(s0 - S0));
+                }
+            }
+
+            // ---------- 柵 ----------
+            const NPOST = Math.ceil(CHUNK_COUNT * CHUNK_LEN / POST_GAP) + 1;
+            const fenceMat = new THREE.MeshStandardMaterial({
+                color: lin(css('--fence')),
+                roughness: 0.9
+            });
+            const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 1.1, 0.1), fenceMat, NPOST * 2);
+            const rails = new THREE.InstancedMesh(new THREE.BoxGeometry(0.05, 0.09, 1), fenceMat, NPOST * 4);
+            for (const m of [posts, rails]) {
+                m.frustumCulled = false;
+                m.castShadow = m.receiveShadow = true;
+            }
+            scene.add(posts, rails);
+            const dummy = new THREE.Object3D();
+
+            function updateFence() {
+                const n0 = Math.floor((S0 - CHUNK_BEHIND) / POST_GAP);
+                let pi = 0,
+                    ri = 0;
+                for (let n = n0; n < n0 + NPOST; n++) {
+                    const s1 = n * POST_GAP,
+                        s2 = s1 + POST_GAP;
+                    for (const side of [-1, 1]) {
+                        const x = side * (HALF_W + 0.1);
+                        const y1 = ground(x, s1),
+                            y2 = ground(x, s2);
+                        rel(dummy.position, s1, x, y1 + 0.5);
+                        dummy.rotation.set(0, 0, 0);
+                        dummy.scale.set(1, 1, 1);
+                        dummy.updateMatrix();
+                        posts.setMatrixAt(pi++, dummy.matrix);
+                        for (const h of [0.45, 0.9]) {
+                            rel(dummy.position, (s1 + s2) / 2, x, (y1 + y2) / 2 + h);
+                            dummy.rotation.set(Math.atan2(y2 - y1, s2 - s1), 0, 0);
+                            dummy.scale.set(1, 1, Math.hypot(POST_GAP, y2 - y1));
+                            dummy.updateMatrix();
+                            rails.setMatrixAt(ri++, dummy.matrix);
+                        }
+                    }
+                }
+                posts.instanceMatrix.needsUpdate = true;
+                rails.instanceMatrix.needsUpdate = true;
+            }
+
+            // ---------- チーズ ----------
+            const cheeseGroup = new THREE.Group();
+            cheeseGroup.rotation.order = 'YXZ';
+            const cheeseSpin = new THREE.Group();
+            cheeseGroup.add(cheeseSpin); {
+                const rindMat = new THREE.MeshStandardMaterial({
+                    map: rindTexture(),
+                    roughness: 0.75
+                });
+                const faceMat = new THREE.MeshStandardMaterial({
+                    map: faceTexture(),
+                    roughness: 0.8
+                });
+                const m = new THREE.Mesh(new THREE.CylinderGeometry(CHEESE_R, CHEESE_R, CHEESE_W, 48).rotateZ(Math.PI / 2), [rindMat, faceMat, faceMat]);
+                m.castShadow = true;
+                cheeseSpin.add(m);
+            }
+            scene.add(cheeseGroup);
+
+            // ---------- チーズの軌跡 ----------
+            // 通った位置を新しい順に覚えておき、チーズの厚みと同じ幅の帯にして描く（後ろほど細く薄く）
+            const trail = [];
+            let trailK = 0;
+            const trailGeo = new THREE.BufferGeometry();
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2 * 3), 3));
+            trailGeo.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2), 1)); {
+                const idx = [];
+                for (let i = 0; i < TRAIL_N - 1; i++) {
+                    const a = i * 2;
+                    idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+                }
+                trailGeo.setIndex(idx);
+            }
+            const trailMesh = new THREE.Mesh(trailGeo, new THREE.ShaderMaterial({
+                uniforms: {
+                    color: {
+                        value: new THREE.Color(css('--trail'))
+                    }
+                },
+                vertexShader: 'attribute float alpha; varying float vA; void main(){ vA = alpha; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                fragmentShader: 'uniform vec3 color; varying float vA; void main(){ gl_FragColor = vec4(color, vA); }',
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+            }));
+            trailMesh.frustumCulled = false;
+            scene.add(trailMesh);
+
+            function recordTrail() {
+                if (cheese.held) return;
+                const t = trail[0];
+                if (t && Math.hypot(cheese.s - t.s, cheese.x - t.x, cheese.y - t.y) < TRAIL_STEP) return;
+                trail.unshift({
+                    s: cheese.s,
+                    x: cheese.x,
+                    y: cheese.y
+                });
+                if (trail.length > TRAIL_N) trail.pop();
+            }
+            const _tp = Array.from({
+                length: TRAIL_N
+            }, () => new THREE.Vector3());
+            const _tt = new THREE.Vector3(),
+                _ts = new THREE.Vector3();
+
+            function drawTrail(dt) {
+                const want = cheese.held ? 0 : clamp((cheese.v - TRAIL_SPEED) / TRAIL_FADE, 0, 1);
+                trailK += (want - trailK) * Math.min(1, dt * 6);
+                const n = trail.length;
+                trailMesh.visible = trailK >
+                0.01 &&
+                n >
+                1;
+                if (!trailMesh.visible) return;
+                // 先頭は今のチーズの中心
+                rel(_tp[0], cheese.s, cheese.x, cheese.y);
+                for (let i = 1; i < TRAIL_N; i++) {
+                    const p = trail[Math.min(i, n - 1)];
+                    rel(_tp[i], p.s, p.x, p.y);
+                }
+                const pos = trailGeo.attributes.position.array,
+                    al = trailGeo.attributes.alpha.array;
+                for (let i = 0; i < TRAIL_N; i++) {
+                    _tt.subVectors(_tp[Math.max(i - 1, 0)], _tp[Math.min(i + 1, TRAIL_N - 1)]);
+                    _ts.crossVectors(_tt, UP); // 進む向きに直角で水平＝チーズの軸の向き
+                    const u = i / (TRAIL_N - 1);
+                    if (_ts.lengthSq() > 1e-10) _ts.normalize().multiplyScalar(CHEESE_W / 2 * (1 - TRAIL_TAPER * u));
+                    else _ts.set(0, 0, 0);
+                    pos[i * 6] = _tp[i].x + _ts.x;
+                    pos[i * 6 + 1] = _tp[i].y + _ts.y;
+                    pos[i * 6 + 2] = _tp[i].z + _ts.z;
+                    pos[i * 6 + 3] = _tp[i].x - _ts.x;
+                    pos[i * 6 + 4] = _tp[i].y - _ts.y;
+                    pos[i * 6 + 5] = _tp[i].z - _ts.z;
+                    al[i * 2] = al[i * 2 + 1] = i <
+                    n ? trailK * TRAIL_ALPHA * Math.pow(1 - u, 1.5) : 0;
+                }
+                trailGeo.attributes.position.needsUpdate = true;
+                trailGeo.attributes.alpha.needsUpdate = true;
+            }
+
+            // ---------- 障害物 ----------
+            // 岩・丸太・干し草ロールは、当たるとチーズがはね、人はつまずいて転ぶ。茂み（ハリエニシダ）は中を通ると遅くなる
+            const obstacles = []; // { kind, s, x, r, len, h, id, mesh }
+            let obSeed = 1,
+                obNextBand = 0;
+            const h01 = n => {
+                let t = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b);
+                t ^= t >>>
+                13;
+                t = Math.imul(t, 0xc2b2ae35);
+                t ^= t >>>
+                16;
+                return (t >>> 0) / 4294967296;
+            };
+
+            // 岩：表面のざらつき
+            function rockTexture() {
+                const S = 128,
+                    rnd = rand(21),
+                    c = new THREE.Color(css('--rock'));
+                const n1 = tileNoise(S, 8, rnd),
+                    n2 = tileNoise(S, 32, rnd);
+                return canvasTex(S, S, d => {
+                    for (let i = 0; i < S * S; i++) {
+                        const k = 0.7 + 0.35 * n1[i] + 0.2 * n2[i] + (rnd() - 0.5) * 0.12;
+                        d[i * 4] = Math.round(255 * clamp(c.r * k, 0, 1));
+                        d[i * 4 + 1] = Math.round(255 * clamp(c.g * k, 0, 1));
+                        d[i * 4 + 2] = Math.round(255 * clamp(c.b * k * 0.97, 0, 1));
+                        d[i * 4 + 3] = 255;
+                    }
+                });
+            }
+            // 木の皮：長さ方向の筋
+            function barkTexture() {
+                const S = 128,
+                    rnd = rand(23),
+                    c = new THREE.Color(css('--bark'));
+                const stripe = new Float32Array(S).map(() => rnd());
+                const n = tileNoise(S, 16, rnd);
+                return canvasTex(S, S, d => {
+                    for (let y = 0; y < S; y++)
+                        for (let x = 0; x < S; x++) {
+                            const k = 0.6 + 0.45 * stripe[(x + Math.floor(n[y * S + x] * 6)) % S] * (0.7 + 0.3 * n[y * S + x]);
+                            const i = (y * S + x) * 4;
+                            d[i] = Math.round(255 * clamp(c.r * k, 0, 1));
+                            d[i + 1] = Math.round(255 * clamp(c.g * k, 0, 1));
+                            d[i + 2] = Math.round(255 * clamp(c.b * k, 0, 1));
+                            d[i + 3] = 255;
+                        }
+                });
+            }
+            // 丸太の切り口：年輪
+            function ringTexture() {
+                const S = 128,
+                    rnd = rand(25),
+                    wood = new THREE.Color(css('--wood')),
+                    bark = new THREE.Color(css('--bark'));
+                return canvasTex(S, S, d => {
+                    for (let y = 0; y < S; y++)
+                        for (let x = 0; x < S; x++) {
+                            const dx = (x + 0.5) / S * 2 - 1,
+                                dy = (y + 0.5) / S * 2 - 1,
+                                r = Math.sqrt(dx * dx + dy * dy);
+                            const base = r >
+                            0.88 ? bark : wood;
+                            const k = (r > 0.88 ? 1 : 0.85 + 0.15 * Math.cos(r * 60)) + (rnd() - 0.5) * 0.06;
+                            const i = (y * S + x) * 4;
+                            d[i] = Math.round(255 * clamp(base.r * k, 0, 1));
+                            d[i + 1] = Math.round(255 * clamp(base.g * k, 0, 1));
+                            d[i + 2] = Math.round(255 * clamp(base.b * k, 0, 1));
+                            d[i + 3] = 255;
+                        }
+                });
+            }
+            // 干し草：横は細い藁の筋、上は渦巻き
+            function strawTexture(top) {
+                const S = 128,
+                    rnd = rand(top ? 29 : 27),
+                    c = new THREE.Color(css('--straw'));
+                const lum = new Float32Array(S * S).map(() => 0.75 + (rnd() - 0.5) * 0.2);
+                for (let k = 0; k < 2500; k++) {
+                    const x0 = Math.floor(rnd() * S),
+                        y0 = Math.floor(rnd() * S),
+                        len = 6 + Math.floor(rnd() * 14),
+                        sh = (rnd() - 0.5) * 0.5;
+                    for (let t = 0; t < len; t++) lum[y0 * S + (x0 + t) % S] += sh;
+                }
+                return canvasTex(S, S, d => {
+                    for (let y = 0; y < S; y++)
+                        for (let x = 0; x < S; x++) {
+                            let k = lum[y * S + x];
+                            if (top) {
+                                const dx = (x + 0.5) / S * 2 - 1,
+                                    dy = (y + 0.5) / S * 2 - 1;
+                                const r = Math.sqrt(dx * dx + dy * dy),
+                                    a = Math.atan2(dy, dx);
+                                k *= 0.85 + 0.15 * Math.sin(r * 40 - a);
+                            }
+                            const i = (y * S + x) * 4;
+                            d[i] = Math.round(255 * clamp(c.r * k, 0, 1));
+                            d[i + 1] = Math.round(255 * clamp(c.g * k, 0, 1));
+                            d[i + 2] = Math.round(255 * clamp(c.b * k, 0, 1));
+                            d[i + 3] = 255;
+                        }
+                });
+            }
+            const rockMat = new THREE.MeshStandardMaterial({
+                map: rockTexture(),
+                roughness: 0.95,
+                flatShading: true
+            });
+            const barkMat = new THREE.MeshStandardMaterial({
+                map: barkTexture(),
+                roughness: 0.95
+            });
+            const ringMat = new THREE.MeshStandardMaterial({
+                map: ringTexture(),
+                roughness: 0.9
+            });
+            const strawSideMat = new THREE.MeshStandardMaterial({
+                map: strawTexture(false),
+                roughness: 1
+            });
+            const strawTopMat = new THREE.MeshStandardMaterial({
+                map: strawTexture(true),
+                roughness: 1
+            });
+            const bushMat = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                roughness: 1,
+                flatShading: true
+            });
+            // 岩の形：球の表面をでこぼこにずらしたものを何種類か作っておく
+            const rockGeos = [];
+            for (let v = 0; v < ROCK_VARIANTS; v++) {
+                const rnd = rand(101 + v),
+                    g = new THREE.IcosahedronGeometry(1, 2),
+                    pos = g.attributes.position;
+                const ph = Array.from({
+                    length: 9
+                }, () => rnd() * TAU);
+                for (let i = 0; i < pos.count; i++) {
+                    const x = pos.getX(i),
+                        y = pos.getY(i),
+                        z = pos.getZ(i);
+                    const k = 1 + 0.16 * Math.sin(x * 2.1 + ph[0]) * Math.sin(y * 1.7 + ph[1]) + 0.12 * Math.sin(z * 2.6 + ph[2] + x) +
+                        0.07 * Math.sin(x * 5.3 + y * 4.1 + ph[3]) + 0.05 * Math.sin(z * 6.1 - y * 3.7 + ph[4]);
+                    pos.setXYZ(i, x * k, y * k, z * k);
+                }
+                g.computeVertexNormals();
+                rockGeos.push(g);
+            }
+            const logGeo = new THREE.CylinderGeometry(1, 1, 1, 16).rotateZ(Math.PI / 2); // 軸が横（x）向き
+            const baleGeo = new THREE.CylinderGeometry(1, 1, 1, 28).translate(0, 0.5, 0); // 底が原点
+            // 茂み（ハリエニシダ）：低くこんもりした土台から細いトゲ状の枝がたくさん外へ伸び、黄色い花が点々と付く。
+            // 部品ごとに色を付けて1つの形にまとめる（部品ごとにメッシュを作ると重いため）
+            function mergeParts(parts) {
+                let n = 0;
+                for (const p of parts) n += p.g.attributes.position.count;
+                const pos = new Float32Array(n * 3),
+                    nor = new Float32Array(n * 3),
+                    col = new Float32Array(n * 3);
+                let o = 0;
+                for (const {
+                        g,
+                        c
+                    } of parts) {
+                    const gp = g.attributes.position,
+                        gn = g.attributes.normal;
+                    for (let i = 0; i < gp.count; i++) {
+                        const k = (o + i) * 3,
+                            x = gp.getX(i),
+                            y = gp.getY(i),
+                            z = gp.getZ(i);
+                        pos[k] = x;
+                        pos[k + 1] = y;
+                        pos[k + 2] = z;
+                        nor[k] = gn.getX(i);
+                        nor[k + 1] = gn.getY(i);
+                        nor[k + 2] = gn.getZ(i);
+                        const cc = typeof c === 'function' ? c(x, y, z) : c;
+                        col[k] = cc.r;
+                        col[k + 1] = cc.g;
+                        col[k + 2] = cc.b;
+                    }
+                    o += gp.count;
+                }
+                const g = new THREE.BufferGeometry();
+                g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+                g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+                return g;
+            }
+
+            function bushGeometry(seed) {
+                const rnd = rand(seed);
+                const leaf = lin(css('--gorse')),
+                    leafLight = lin(css('--gorse-light')),
+                    flower = lin(css('--gorse-flower'));
+                const ph = Array.from({
+                    length: 4
+                }, () => rnd() * TAU);
+                // 土台の表面までの距離（方向によって少しでこぼこ）と、つぶし具合
+                const rad = (x, z) =>
+                1 + 0.16 * Math.sin(Math.atan2(z, x) * 3 + ph[0]) + 0.08 * Math.sin(Math.atan2(z, x) * 7 + ph[1]);
+                const SQUASH = 0.6;
+                const surf = (dx, dy, dz) => {
+                    const r = rad(dx, dz);
+                    return new THREE.Vector3(dx * r, dy * r * SQUASH, dz * r);
+                };
+                const parts = [];
+                // 土台：下ほど暗くして、枝の奥の影に見せる
+                const mound = new THREE.SphereGeometry(1, 16, 8, 0, TAU, 0, Math.PI / 2).toNonIndexed();
+                const mp = mound.attributes.position;
+                for (let i = 0; i < mp.count; i++) {
+                    const v = surf(mp.getX(i), mp.getY(i), mp.getZ(i));
+                    mp.setXYZ(i, v.x * 0.8, v.y * 0.8, v.z * 0.8);
+                }
+                mound.computeVertexNormals();
+                parts.push({
+                    g: mound,
+                    c: (x, y) =>leaf.clone().multiplyScalar(0.45 + 0.5 * y / SQUASH)
+                });
+                // トゲ状の枝：土台の表面から外向き（少し上向き）に伸ばす
+                const cone = new THREE.ConeGeometry(1, 1, 4).translate(0, 0.5, 0).toNonIndexed();
+                const m = new THREE.Matrix4(),
+                    q = new THREE.Quaternion(),
+                    sc = new THREE.Vector3(),
+                    dir = new THREE.Vector3();
+                const randDir = () => {
+                    const a = rnd() * TAU,
+                        y = Math.pow(rnd(), 0.7) * 0.95 + 0.05,
+                        h = Math.sqrt(1 - y * y);
+                    return [Math.cos(a) * h, y, Math.sin(a) * h];
+                };
+                for (let i = 0; i < BUSH_SPIKES; i++) {
+                    const [dx, dy, dz] = randDir();
+                    const p = surf(dx, dy, dz).multiplyScalar(0.85);
+                    dir.set(dx + (rnd() - 0.5) * 0.6, dy * 1.3 + 0.2 + (rnd() - 0.5) * 0.4, dz + (rnd() - 0.5) * 0.6).normalize();
+                    q.setFromUnitVectors(UP, dir);
+                    const len = 0.18 + rnd() * 0.22;
+                    sc.set(0.025 + rnd() * 0.015, len, 0.025 + rnd() * 0.015);
+                    m.compose(p, q, sc);
+                    const shade = 0.6 + 0.5 * dy;
+                    parts.push({
+                        g: cone.clone().applyMatrix4(m),
+                        c: leaf.clone().lerp(leafLight, rnd()).multiplyScalar(shade)
+                    });
+                }
+                // 黄色い花：表面の少し外に小さな粒
+                const bud = new THREE.IcosahedronGeometry(1, 0); // 正多面体はもともとインデックスなし
+                for (let i = 0; i < BUSH_FLOWERS; i++) {
+                    const [dx, dy, dz] = randDir();
+                    const p = surf(dx, dy, dz).multiplyScalar(0.98 + rnd() * 0.12);
+                    const r = 0.022 + rnd() * 0.015;
+                    m.compose(p, q.identity(), sc.set(r, r, r));
+                    parts.push({
+                        g: bud.clone().applyMatrix4(m),
+                        c: flower.clone().multiplyScalar(0.85 + rnd() * 0.25)
+                    });
+                }
+                return mergeParts(parts);
+            }
+            const bushGeos = Array.from({
+                length: BUSH_VARIANTS
+            }, (_, v) => bushGeometry(201 + v));
+
+            const pools = {
+                rock: [],
+                bush: [],
+                log: [],
+                bale: []
+            };
+
+            function makeMesh(kind) {
+                let m;
+                if (kind === 'rock') m = new THREE.Mesh(rockGeos[0], rockMat);
+                if (kind === 'log') m = new THREE.Mesh(logGeo, [barkMat, ringMat, ringMat]);
+                if (kind === 'bale') m = new THREE.Mesh(baleGeo, [strawSideMat, strawTopMat, strawTopMat]);
+                if (kind === 'bush') m = new THREE.Mesh(bushGeos[0], bushMat);
+                m.castShadow = m.receiveShadow = true;
+                scene.add(m);
+                return m;
+            }
+
+            function takeMesh(o) {
+                const m = pools[o.kind].pop() || makeMesh(o.kind);
+                m.visible = true;
+                m.rotation.set(0, o.yaw || 0, 0);
+                if (o.kind === 'rock') {
+                    m.geometry = rockGeos[o.shape];
+                    m.scale.set(o.r, o.r * 0.8, o.r);
+                }
+                if (o.kind === 'bush') {
+                    m.geometry = bushGeos[o.shape];
+                    m.scale.set(o.r, o.h, o.r);
+                }
+                if (o.kind === 'log') m.scale.set(o.len, o.r, o.r);
+                if (o.kind === 'bale') m.scale.set(o.r, o.h, o.r);
+                return m;
+            }
+
+            function releaseMesh(o) {
+                o.mesh.visible = false;
+                pools[o.kind].push(o.mesh);
+            }
+
+            // 区切りごとに、決まった乱数で障害物を置く（先へ進むほど多くなる）
+            function genBand(b) {
+                const s0 = b * OB_BAND;
+                if (s0 < OB_START) return;
+                const rnd = rand(obSeed * 100003 + b * 7919);
+                const rate = Math.min(OB_RATE_MAX, OB_RATE0 + s0 * OB_RATE_GROW);
+                let n = rnd() <
+                rate ? 1 : 0;
+                if (n && rnd() < s0 * OB_SECOND) n = 2;
+                for (let i = 0; i < n; i++) {
+                    let u = rnd(),
+                        kind = OB_KIND[0][0];
+                    for (const [k, w] of OB_KIND) {
+                        if (u < w) {
+                            kind = k;
+                            break;
+                        }
+                        u -= w;
+                    }
+                    const o = {
+                        kind,
+                        s: s0 + rnd() * OB_BAND,
+                        id: b * 4 + i,
+                        r: 0,
+                        len: 0,
+                        h: 0,
+                        yaw: rnd() * TAU
+                    };
+                    if (kind === 'rock') {
+                        o.r = 0.3 + rnd() * 0.4;
+                        o.shape = Math.floor(rnd() * ROCK_VARIANTS);
+                    }
+                    if (kind === 'bush') {
+                        o.r = 0.7 + rnd() * 0.5;
+                        o.h = 0.9 + rnd() * 0.5;
+                        o.shape = Math.floor(rnd() * BUSH_VARIANTS);
+                    }
+                    if (kind === 'log') {
+                        o.r = 0.2 + rnd() * 0.1;
+                        o.len = 2 + rnd() * 2.5;
+                        o.yaw = 0;
+                    }
+                    if (kind === 'bale') {
+                        o.r = 0.65;
+                        o.h = 1.2;
+                    }
+                    const half = (kind === 'log' ? o.len / 2 : o.r) + 0.3;
+                    o.x = -HALF_W + half + rnd() * 2 * (HALF_W - half);
+                    o.mesh = takeMesh(o);
+                    obstacles.push(o);
+                }
+            }
+
+            function updateObstacles() {
+                while (obNextBand * OB_BAND < S0 + OB_AHEAD) genBand(obNextBand++);
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    if (obstacles[i].s < S0 - OB_BEHIND) {
+                        releaseMesh(obstacles[i]);
+                        obstacles.splice(i, 1);
+                    }
+                }
+            }
+
+            function clearObstacles() {
+                for (const o of obstacles) releaseMesh(o);
+                obstacles.length = 0;
+                obNextBand = 0;
+                obSeed = Math.floor(Math.random() * 1e6); // 毎回違う配置にする
+            }
+
+            function drawObstacles() {
+                for (const o of obstacles) {
+                    const m = o.mesh;
+                    if (o.kind === 'rock') rel(m.position, o.s, o.x, ground(o.x, o.s) + o.r * 0.25);
+                    if (o.kind === 'bush') rel(m.position, o.s, o.x, ground(o.x, o.s) - 0.08);
+                    if (o.kind === 'bale') rel(m.position, o.s, o.x, ground(o.x, o.s) - 0.06);
+                    if (o.kind === 'log') {
+                        // 丸太は坂の横の傾きに合わせて寝かせる
+                        const g1 = ground(o.x - o.len / 2, o.s),
+                            g2 = ground(o.x + o.len / 2, o.s);
+                        rel(m.position, o.s, o.x, (g1 + g2) / 2 + o.r * 0.85);
+                        m.rotation.set(0, 0, Math.atan2(g2 - g1, o.len));
+                    }
+                }
+            }
+
+            // 点（半径 pr）が障害物にめり込んでいれば、押し出す向きを _n に入れて深さを返す（座標は x, 高さ, s）
+            const _n = [0, 0, 0];
+
+            function obstacleHit(o, x, y, s, pr) {
+                if (o.kind === 'rock' || o.kind === 'log') {
+                    let cx = o.x,
+                        cy, R;
+                    if (o.kind === 'rock') {
+                        cy = ground(o.x, o.s) + o.r * 0.25;
+                        R = o.r * 0.9 + pr;
+                    } else {
+                        const x1 = o.x - o.len / 2,
+                            t = clamp((x - x1) / o.len, 0, 1);
+                        cx = x1 + t * o.len;
+                        cy = lerp(ground(x1, o.s), ground(x1 + o.len, o.s), t) + o.r * 0.85;
+                        R = o.r + pr;
+                    }
+                    const dx = x - cx,
+                        dy = y - cy,
+                        ds = s - o.s,
+                        d = Math.hypot(dx, dy, ds);
+                    if (d >= R || d < 1e-6) return 0;
+                    _n[0] = dx / d;
+                    _n[1] = dy / d;
+                    _n[2] = ds / d;
+                    return R - d;
+                }
+                if (o.kind === 'bale') {
+                    const gy = ground(o.x, o.s),
+                        top = gy + o.h;
+                    const dx = x - o.x,
+                        ds = s - o.s,
+                        d = Math.hypot(dx, ds) || 1e-6;
+                    const side = o.r + pr - d,
+                        up = top + pr - y;
+                    if (side <= 0 || up <= 0 || y < gy - pr) return 0;
+                    if (up < side) {
+                        _n[0] = 0;
+                        _n[1] = 1;
+                        _n[2] = 0;
+                        return up;
+                    }
+                    _n[0] = dx / d;
+                    _n[1] = 0;
+                    _n[2] = ds / d;
+                    return side;
+                }
+                return 0;
+            }
+            const hard = o =>
+            o.kind !== 'bush';
+            const halfWidth = o =>
+            o.kind === 'log' ? o.len / 2 : o.r;
+
+            function obstaclesNear(x, s, range) {
+                const out = [];
+                for (const o of obstacles)
+                    if (hard(o) && Math.abs(o.s - s) < range && Math.abs(o.x - x) < halfWidth(o) + range) out.push(o);
+                return out;
+            }
+
+            function inBush(x, s) {
+                for (const o of obstacles)
+                    if (o.kind === 'bush' && Math.hypot(x - o.x, s - o.s) < o.r * 0.9) return true;
+                return false;
+            }
+            // 走っている人の足が障害物にかかったか
+            function tripTest(o, x, s) {
+                if (o.kind === 'rock') return Math.hypot(x - o.x, s - o.s) <
+                o.r * 0.9 + TRIP_MARGIN;
+                if (o.kind === 'bale') return Math.hypot(x - o.x, s - o.s) <
+                o.r + TRIP_MARGIN;
+                if (o.kind === 'log') return Math.abs(s - o.s) <
+                o.r + TRIP_MARGIN &&
+                Math.abs(x - o.x) <
+                o.len / 2 + 0.15;
+                return false;
+            }
+            // 先の障害物をよける。気づくかどうかは人ごとの注意深さで決まる
+            function avoidX(c, want) {
+                for (const o of obstacles) {
+                    const ahead = o.s - c.s;
+                    if (ahead < 0.2 || ahead > AVOID_LOOK) continue;
+                    const half = halfWidth(o) + 0.55;
+                    if (Math.abs(c.x - o.x) > half + 0.4 && Math.abs(want - o.x) > half) continue;
+                    if (h01(c.idx * 7349 + o.id * 31 + obSeed) > c.skill) continue;
+                    let goLeft = want <
+                    o.x;
+                    if (goLeft && o.x - half < - HALF_W + 0.5) goLeft = false;
+                    if (!goLeft && o.x + half > HALF_W - 0.5) goLeft = true;
+                    return goLeft ? Math.min(want, o.x - half) : Math.max(want, o.x + half);
+                }
+                return want;
+            }
+            // チーズが障害物に当たるとはね返る
+            function cheeseObstacles(c) {
+                for (const o of obstacles) {
+                    if (!hard(o) || Math.abs(o.s - c.s) > 3.5) continue;
+                    const d = obstacleHit(o, c.x, c.y, c.s, CHEESE_R * 0.9);
+                    if (d <= 0) continue;
+                    c.x += _n[0] * d;
+                    c.y += _n[1] * d;
+                    c.s += _n[2] * d;
+                    const vn = c.vx * _n[0] + c.vy * _n[1] + c.v * _n[2];
+                    if (vn < 0) {
+                        c.vx -= (1 + OB_BOUNCE) * vn * _n[0];
+                        c.vy -= (1 + OB_BOUNCE) * vn * _n[1];
+                        c.v -= (1 + OB_BOUNCE) * vn * _n[2];
+                        c.vx *= OB_LOSS;
+                        c.v *= OB_LOSS;
+                        c.tiltV += (Math.random() - 0.5) * Math.abs(vn) * TILT_KICK * 4;
+                        c.grounded = false;
+                    }
+                }
+            }
+            // つまずく：走っていた勢いのまま、前へ倒れながらラグドールになる
+            function trip(c) {
+                c.state = 'rag';
+                c.t = 0;
+                c.canCatch = false;
+                const p = c.p,
+                    q = c.q,
+                    k = PELVIS * 3;
+                const sy = Math.sin(c.yaw),
+                    cy = Math.cos(c.yaw);
+                const wx = TRIP_SPIN * cy,
+                    ws = -TRIP_SPIN * sy; // 右向きの軸まわりに前へ回す
+                for (let i = 0; i < NP; i++) {
+                    const ox = p[i * 3] - p[k],
+                        oy = p[i * 3 + 1] - p[k + 1],
+                        os = p[i * 3 + 2] - p[k + 2];
+                    q[i * 3] -= -ws * oy * STEP;
+                    q[i * 3 + 1] -= (ws * ox - wx * os + TRIP_HOP) * STEP;
+                    q[i * 3 + 2] -= wx * oy * STEP;
+                }
+            }
+
+            // ---------- 人の体 ----------
+            // 点の番号
+            const HEAD = 0,
+                NECK = 1,
+                PELVIS = 2,
+                SHL = 3,
+                SHR = 4,
+                ELL = 5,
+                ELR = 6,
+                HNL = 7,
+                HNR = 8;
+            const HPL = 9,
+                HPR = 10,
+                KNL = 11,
+                KNR = 12,
+                FTL = 13,
+                FTR = 14,
+                NP = 15;
+            const PART_R = [0.11, 0.06, 0.1, 0.06, 0.06, 0.05, 0.05, 0.05, 0.05, 0.07, 0.07, 0.06, 0.06, 0.05, 0.05]; // 地面との当たりの半径（m）
+            const INV_M = [1 / 4, 1 / 5, 1 / 12, 1 / 4, 1 / 4, 1 / 1.6, 1 / 1.6, 1 / 0.6, 1 / 0.6, 1 / 6, 1 / 6, 1 / 4, 1 / 4, 1 / 1.5, 1 / 1.5]; // 重さの逆数（重い点ほど動きにくい）
+            const TORSO = [NECK, SHL, SHR, PELVIS, HPL, HPR];
+            let DIST = []; // [a, b, 長さ] 長さを保つ棒
+            const MIN_DIST = [
+                [HPL, FTL, 0.33],
+                [HPR, FTR, 0.33],
+                [SHL, HNL, 0.2],
+                [SHR, HNR, 0.2]
+            ]; // 膝・肘を畳みすぎない
+
+            // 姿勢を作る（走り・かまえ・飛びつき・立ち）。座標は (x, 高さ, s)
+            function writePose(c, o, mode, k) {
+                const sy = Math.sin(c.yaw),
+                    cy = Math.cos(c.yaw);
+                const Fx = sy,
+                    Fs = cy,
+                    Rx = cy,
+                    Rs = -sy; // 水平の前・右
+                const set = (i, x, y, s) => {
+                    o[i * 3] = x;
+                    o[i * 3 + 1] = y;
+                    o[i * 3 + 2] = s;
+                };
+                const ph = c.phase;
+                const v = mode === 'run' ? c.v : 0;
+                const vr = Math.min(1, v / 3); // 走りの大きさ（ゆっくりだと動きも小さい）
+                let lean = 0,
+                    hipY = 0.93,
+                    twist = 0,
+                    armL = 0.1,
+                    armR = 0.1,
+                    bend = 0.3;
+                const feet = [
+                    [0, 0],
+                    [0, 0]
+                ]; // 左右の足の [前後, 持ち上げ]
+                if (mode === 'run') {
+                    lean = 0.18 * Math.min(1, v / 5); // 急な下り坂なので後ろに反って走る
+                    hipY = 0.885 - 0.035 * vr * Math.cos(4 * Math.PI * (ph - RUN_DUTY / 2));
+                    twist = 0.15 * vr * Math.cos(TAU * ph);
+                    armR = 0.1 + 0.75 * vr * Math.cos(TAU * ph);
+                    armL = 0.1 - 0.75 * vr * Math.cos(TAU * ph);
+                    bend = 0.3 + 1.2 * vr;
+                    const a = clamp(v / c.freq * RUN_DUTY / 2, 0, 0.45);
+                    for (let side = 0; side < 2; side++) {
+                        const r = frac(ph + side * 0.5);
+                        if (r < RUN_DUTY) {
+                            feet[side][0] = a * (1 - 2 * r / RUN_DUTY); // 着いている足は地面に止まったまま後ろへ
+                        } else {
+                            const u = (r - RUN_DUTY) / (1 - RUN_DUTY);
+                            feet[side][0] = -a + 2 * a * smooth(u) - 0.3 * vr * Math.sin(Math.PI * u); // かかとを後ろに蹴り上げて前へ
+                            feet[side][1] = (0.08 + 0.27 * Math.min(1, v / 6)) * Math.sin(Math.PI * u);
+                        }
+                    }
+                } else if (mode === 'crouch') {
+                    lean = -0.55 * k;
+                    hipY = 0.88 - 0.18 * k;
+                    armL = armR = -0.9 * k;
+                    bend = 0.6;
+                    feet[0][0] = 0.25;
+                    feet[1][0] = -0.2;
+                } else if (mode === 'reach') {
+                    lean = -1.0;
+                    hipY = 0.78;
+                    armL = armR = 2.7;
+                    bend = 0.15;
+                    feet[0][0] = -0.45;
+                    feet[1][0] = -0.25;
+                    feet[1][1] = 0.2;
+                } else if (mode === 'ready') {
+                    lean = -0.35;
+                    hipY = 0.86;
+                    armL = -0.3;
+                    armR = 0.5;
+                    bend = 1.2;
+                    feet[0][0] = 0.2;
+                    feet[1][0] = -0.25;
+                }
+                const gy = ground(c.x, c.s);
+                const px = c.x,
+                    py = gy + hipY,
+                    ps = c.s;
+                // 胴の上（傾き込み）と、胴に垂直な前
+                const cl = Math.cos(lean),
+                    sl = Math.sin(lean);
+                const Tx = -Fx * sl,
+                    Ty = cl,
+                    Ts = -Fs * sl;
+                const Px = Fx * cl,
+                    Py = sl,
+                    Ps = Fs * cl;
+                // 腰と肩は逆向きにひねる
+                const ct = Math.cos(twist),
+                    st = Math.sin(twist);
+                const RhX = Rx * ct - Fx * st,
+                    RhS = Rs * ct - Fs * st;
+                const RsX = Rx * ct + Fx * st,
+                    RsS = Rs * ct + Fs * st;
+                set(PELVIS, px, py, ps);
+                set(NECK, px + Tx * 0.52, py + Ty * 0.52, ps + Ts * 0.52);
+                set(HEAD, px + Tx * 0.7 + Px * 0.03, py + Ty * 0.7 + Py * 0.03, ps + Ts * 0.7 + Ps * 0.03);
+                for (let side = 0; side < 2; side++) {
+                    const sg = side ? 1 : -1;
+                    const S = side ? SHR : SHL,
+                        E = side ? ELR : ELL,
+                        Hn = side ? HNR : HNL;
+                    const sx = px + Tx * 0.47 + RsX * 0.19 * sg,
+                        syy = py + Ty * 0.47,
+                        ss = ps + Ts * 0.47 + RsS * 0.19 * sg;
+                    set(S, sx, syy, ss);
+                    const th = side ? armR : armL;
+                    const c1 = Math.cos(th),
+                        s1 = Math.sin(th),
+                        c2 = Math.cos(th + bend),
+                        s2 = Math.sin(th + bend);
+                    const ex = sx + (-Tx * c1 + Px * s1) * UPARM + Rx * 0.03 * sg,
+                        ey = syy + (-Ty * c1 + Py * s1) * UPARM,
+                        es = ss + (-Ts * c1 + Ps * s1) * UPARM + Rs * 0.03 * sg;
+                    set(E, ex, ey, es);
+                    set(Hn, ex + (-Tx * c2 + Px * s2) * FOREARM, ey + (-Ty * c2 + Py * s2) * FOREARM, es + (-Ts * c2 + Ps * s2) * FOREARM);
+                    // 脚：足の行き先を地面の上に決め、膝は2本の骨の長さから求める
+                    const Hp = side ? HPR : HPL,
+                        Kn = side ? KNR : KNL,
+                        Ft = side ? FTR : FTL;
+                    const hx = px - Tx * 0.04 + RhX * 0.1 * sg,
+                        hy = py - Ty * 0.04,
+                        hs = ps - Ts * 0.04 + RhS * 0.1 * sg;
+                    set(Hp, hx, hy, hs);
+                    const fx = hx + Fx * feet[side][0],
+                        fs = hs + Fs * feet[side][0];
+                    let tx = fx - hx,
+                        ty = ground(fx, fs) + FOOT_H + feet[side][1] - hy,
+                        ts = fs - hs;
+                    let d = Math.hypot(tx, ty, ts);
+                    const maxD = THIGH + SHIN - 0.002;
+                    if (d > maxD) {
+                        tx *= maxD / d;
+                        ty *= maxD / d;
+                        ts *= maxD / d;
+                        d = maxD;
+                    }
+                    const nx = tx / d,
+                        ny = ty / d,
+                        ns = ts / d;
+                    const along = (THIGH * THIGH - SHIN * SHIN + d * d) / (2 * d);
+                    const h = Math.sqrt(Math.max(0, THIGH * THIGH - along * along));
+                    let bx = Fx - nx * (Fx * nx + Fs * ns),
+                        by = -ny * (Fx * nx + Fs * ns),
+                        bs = Fs - ns * (Fx * nx + Fs * ns);
+                    const bl = Math.hypot(bx, by, bs) || 1;
+                    bx /= bl;
+                    by /= bl;
+                    bs /= bl;
+                    set(Kn, hx + nx * along + bx * h, hy + ny * along + by * h, hs + ns * along + bs * h);
+                    set(Ft, hx + tx, hy + ty, hs + ts);
+                }
+            }
+
+            // 棒の長さは立った姿勢から測る
+            {
+                const tmp = {
+                    s: 0,
+                    x: 0,
+                    yaw: 0,
+                    phase: 0,
+                    v: 0,
+                    freq: 1
+                };
+                const o = new Float64Array(NP * 3);
+                writePose(tmp, o, 'idle', 0);
+                const len = (a, b) =>
+                Math.hypot(o[a * 3] - o[b * 3], o[a * 3 + 1] - o[b * 3 + 1], o[a * 3 + 2] - o[b * 3 + 2]);
+                for (let i = 0; i < TORSO.length; i++)
+                    for (let j = i + 1; j < TORSO.length; j++) DIST.push([TORSO[i], TORSO[j], len(TORSO[i], TORSO[j])]);
+                DIST.push([HEAD, NECK, len(HEAD, NECK)], [HEAD, SHL, len(HEAD, SHL)], [HEAD, SHR, len(HEAD, SHR)]);
+                DIST.push([SHL, ELL, UPARM], [ELL, HNL, FOREARM], [SHR, ELR, UPARM], [ELR, HNR, FOREARM]);
+                DIST.push([HPL, KNL, THIGH], [KNL, FTL, SHIN], [HPR, KNR, THIGH], [KNR, FTR, SHIN]);
+            }
+
+            function solveDist(p, a, b, rest, minOnly) {
+                const ia = a * 3,
+                    ib = b * 3;
+                const dx = p[ib] - p[ia],
+                    dy = p[ib + 1] - p[ia + 1],
+                    ds = p[ib + 2] - p[ia + 2];
+                const d = Math.sqrt(dx * dx + dy * dy + ds * ds) || 1e-6;
+                if (minOnly && d >= rest) return;
+                const wa = INV_M[a] / (INV_M[a] + INV_M[b]),
+                    wb = 1 - wa;
+                const f = (d - rest) / d;
+                p[ia] += dx * f * wa;
+                p[ia + 1] += dy * f * wa;
+                p[ia + 2] += ds * f * wa;
+                p[ib] -= dx * f * wb;
+                p[ib + 1] -= dy * f * wb;
+                p[ib + 2] -= ds * f * wb;
+            }
+
+            // 胴の前向き（右×上）
+            function torsoForward(p, out) {
+                const rx = p[HPR * 3] - p[HPL * 3],
+                    ry = p[HPR * 3 + 1] - p[HPL * 3 + 1],
+                    rs = p[HPR * 3 + 2] - p[HPL * 3 + 2];
+                const ux = p[NECK * 3] - p[PELVIS * 3],
+                    uy = p[NECK * 3 + 1] - p[PELVIS * 3 + 1],
+                    us = p[NECK * 3 + 2] - p[PELVIS * 3 + 2];
+                let fx = ry * us - rs * uy,
+                    fy = rs * ux - rx * us,
+                    fs = rx * uy - ry * ux;
+                const l = Math.hypot(fx, fy, fs) || 1;
+                out[0] = fx / l;
+                out[1] = fy / l;
+                out[2] = fs / l;
+            }
+            // 膝が逆に曲がらないように、膝を胴の前側に保つ
+            const _f = [0, 0, 0];
+
+            function kneeLimit(p) {
+                torsoForward(p, _f);
+                for (const [Hp, Kn, Ft] of [
+                        [HPL, KNL, FTL],
+                        [HPR, KNR, FTR]
+                    ]) {
+                    let d = 0;
+                    for (let a = 0; a < 3; a++) d += (p[Kn * 3 + a] - (p[Hp * 3 + a] + p[Ft * 3 + a]) / 2) * _f[a];
+                    if (d < 0)
+                        for (let a = 0; a < 3; a++) p[Kn * 3 + a] -= _f[a] * d;
+                }
+            }
+            // 飛びついている間は腕を前に伸ばしておく
+            function reachArms(p) {
+                const ux = p[NECK * 3] - p[PELVIS * 3],
+                    uy = p[NECK * 3 + 1] - p[PELVIS * 3 + 1],
+                    us = p[NECK * 3 + 2] - p[PELVIS * 3 + 2];
+                const ul = Math.hypot(ux, uy, us) || 1;
+                for (const [S, E, Hn] of [
+                        [SHL, ELL, HNL],
+                        [SHR, ELR, HNR]
+                    ]) {
+                    for (const [i, L] of [
+                            [E, UPARM],
+                            [Hn, UPARM + FOREARM]
+                        ]) {
+                        for (let a = 0; a < 3; a++) {
+                            const t = p[S * 3 + a] + [ux, uy, us][a] / ul * L;
+                            p[i * 3 + a] += (t - p[i * 3 + a]) * 0.25;
+                        }
+                    }
+                }
+            }
+
+            const _gy = new Float64Array(NP),
+                _pen = new Float64Array(NP),
+                _nrm = new Float64Array(NP * 3),
+                _hasN = new Uint8Array(NP);
+            // ラグドールを1ステップ進める
+            function ragStep(c, dt, reaching) {
+                const p = c.p,
+                    q = c.q,
+                    gdt = G * dt * dt;
+                for (let i = 0; i < NP * 3; i++) {
+                    const v = (p[i] - q[i]) * RAG_DAMP;
+                    q[i] = p[i];
+                    p[i] += v;
+                }
+                for (let i = 0; i < NP; i++) p[i * 3 + 1] -= gdt;
+                if (reaching) reachArms(p);
+                for (let i = 0; i < NP; i++) {
+                    _gy[i] = ground(p[i * 3], p[i * 3 + 2]) + PART_R[i];
+                    _pen[i] = 0;
+                    _hasN[i] = 0;
+                }
+                const near = obstaclesNear(p[PELVIS * 3], p[PELVIS * 3 + 2], 3);
+                const lim = HALF_W - 0.1;
+                for (let it = 0; it < RAG_ITER; it++) {
+                    for (const [a, b, r] of DIST) solveDist(p, a, b, r, false);
+                    for (const [a, b, r] of MIN_DIST) solveDist(p, a, b, r, true);
+                    kneeLimit(p);
+                    for (let i = 0; i < NP; i++) {
+                        const k = i * 3;
+                        if (p[k + 1] < _gy[i]) {
+                            _pen[i] += _gy[i] - p[k + 1];
+                            p[k + 1] = _gy[i];
+                        }
+                        for (const o of near) {
+                            const d = obstacleHit(o, p[k], p[k + 1], p[k + 2], PART_R[i]);
+                            if (d > 0) {
+                                p[k] += _n[0] * d;
+                                p[k + 1] += _n[1] * d;
+                                p[k + 2] += _n[2] * d;
+                                _pen[i] += d;
+                                _hasN[i] = 1;
+                                _nrm[k] = _n[0];
+                                _nrm[k + 1] = _n[1];
+                                _nrm[k + 2] = _n[2];
+                            }
+                        }
+                        if (p[k] > lim) {
+                            p[k] = lim;
+                            q[k] = Math.max(q[k], lim);
+                        }
+                        if (p[k] < - lim) {
+                            p[k] = -lim;
+                            q[k] = Math.min(q[k], -lim);
+                        }
+                    }
+                }
+                // 地面に触れた点は、めり込む速さを消し、横すべりを摩擦で減らす
+                for (let i = 0; i < NP; i++) {
+                    if (_pen[i] <= 0) continue;
+                    const k = i * 3,
+                        x = p[k],
+                        s = p[k + 2];
+                    let nx = -slopeX(x, s),
+                        ny = 1,
+                        ns = -slopeS(x, s);
+                    if (_hasN[i]) {
+                        nx = _nrm[k];
+                        ny = _nrm[k + 1];
+                        ns = _nrm[k + 2];
+                    } // 障害物に当たった点はその面で滑る
+                    const nl = Math.hypot(nx, ny, ns);
+                    nx /= nl;
+                    ny /= nl;
+                    ns /= nl;
+                    let vx = p[k] - q[k],
+                        vy = p[k + 1] - q[k + 1],
+                        vs = p[k + 2] - q[k + 2];
+                    const vn0 = vx * nx + vy * ny + vs * ns;
+                    if (vn0 < 0) {
+                        vx -= vn0 * nx;
+                        vy -= vn0 * ny;
+                        vs -= vn0 * ns;
+                    }
+                    const vn = vx * nx + vy * ny + vs * ns;
+                    const tx = vx - vn * nx,
+                        ty = vy - vn * ny,
+                        ts = vs - vn * ns;
+                    const tl = Math.hypot(tx, ty, ts);
+                    const fr = RAG_MU * (_pen[i] + Math.max(0, -vn0));
+                    const kk = tl >
+                    1e-9 ? Math.max(0, tl - fr) / tl : 0;
+                    q[k] = p[k] - (vn * nx + tx * kk);
+                    q[k + 1] = p[k + 1] - (vn * ny + ty * kk);
+                    q[k + 2] = p[k + 2] - (vn * ns + ts * kk);
+                }
+            }
+
+            // ---------- 人の見た目 ----------
+            // 円柱（胴・首・腕・脚）と球（腰・頭・髪・関節・手・靴）を、点の位置に合わせて置く
+            const CYL = [
+                [PELVIS, NECK, 'shirt', 0.16, 0.105],
+                [NECK, HEAD, 'skin', 0.045, 0.045],
+                [SHL, ELL, 'shirt', 0.05, 0.05],
+                [SHR, ELR, 'shirt', 0.05, 0.05],
+                [ELL, HNL, 'skin', 0.038, 0.038],
+                [ELR, HNR, 'skin', 0.038, 0.038],
+                [HPL, KNL, 'pants', 0.075, 0.075],
+                [HPR, KNR, 'pants', 0.075, 0.075],
+                [KNL, FTL, 'pants', 0.055, 0.055],
+                [KNR, FTR, 'pants', 0.055, 0.055]
+            ];
+            const SPH = [
+                [PELVIS, 'pants', 0.16, 0.11, 0.11],
+                [HEAD, 'skin', 0.105, 0.115, 0.105],
+                [HEAD, 'hair', 0.11, 0.1, 0.112],
+                [SHL, 'shirt', 0.062, 0.062, 0.062],
+                [SHR, 'shirt', 0.062, 0.062, 0.062],
+                [ELL, 'skin', 0.04, 0.04, 0.04],
+                [ELR, 'skin', 0.04, 0.04, 0.04],
+                [HNL, 'skin', 0.045, 0.05, 0.035],
+                [HNR, 'skin', 0.045, 0.05, 0.035],
+                [KNL, 'pants', 0.06, 0.06, 0.06],
+                [KNR, 'pants', 0.06, 0.06, 0.06],
+                [FTL, 'shoe', 0.05, 0.045, 0.125],
+                [FTR, 'shoe', 0.05, 0.045, 0.125]
+            ];
+            const bodyMat = new THREE.MeshStandardMaterial({
+                roughness: 0.85,
+                metalness: 0
+            });
+            const cylMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 12), bodyMat, CH_MAX * CYL.length);
+            const sphMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 16, 12), bodyMat, CH_MAX * SPH.length);
+            for (const m of [cylMesh, sphMesh]) {
+                m.frustumCulled = false;
+                m.castShadow = true;
+                m.receiveShadow = true;
+                scene.add(m);
+            }
+
+            const PALETTE = {
+                skin: list('--skins'),
+                shirt: list('--shirts'),
+                pants: list('--pants'),
+                hair: list('--hair'),
+                shoe: list('--shoes')
+            };
+            const chasers = [];
+            for (let i = 0; i < CH_MAX; i++) {
+                const pick = (k, n) =>
+                lin(PALETTE[k][(i * n + Math.floor(i / PALETTE[k].length)) % PALETTE[k].length]);
+                const col = {
+                    skin: pick('skin', 3),
+                    shirt: pick('shirt', 1),
+                    pants: pick('pants', 5),
+                    hair: pick('hair', 2),
+                    shoe: pick('shoe', 3)
+                };
+                CYL.forEach((d, j) => cylMesh.setColorAt(i * CYL.length + j, col[d[2]]));
+                SPH.forEach((d, j) => sphMesh.setColorAt(i * SPH.length + j, col[d[1]]));
+                chasers.push({
+                    p: new Float64Array(NP * 3),
+                    q: new Float64Array(NP * 3),
+                    a: new Float64Array(NP * 3),
+                    active: false,
+                    idx: i
+                });
+            }
+            cylMesh.instanceColor.needsUpdate = sphMesh.instanceColor.needsUpdate = true;
+
+            // ---------- 人の動き ----------
+            function setPose(c, mode, k) {
+                // 動き：前の位置を残して新しい姿勢へ（この差が速さになり、転んだ瞬間に勢いが引き継がれる）
+                c.q.set(c.p);
+                writePose(c, c.p, mode, k);
+            }
+
+            function resetChaser(c, i, initial) {
+                c.state = initial ? 'wait' : 'run';
+                c.s = initial ? -3 - (i % 2) * 1.2 : S0 - SPAWN_BEHIND - Math.random() * 4;
+                c.x = initial ? (i - (CH_START - 1) / 2) * 1.2 : clamp(cheese.x + (Math.random() * 2 - 1) * 5, -HALF_W + 0.5, HALF_W - 0.5);
+                c.v = initial ? 0 : cheese.v;
+                c.vx = 0;
+                c.t = 0;
+                c.yaw = 0;
+                c.freq = 1.2;
+                c.cool = initial ? START_DELAY + START_GRACE : 0; // スタート直後はすぐ後ろにいるので、しばらく飛びつかない
+                c.phase = Math.random();
+                c.vary = (Math.random() * 2 - 1) * SPEED_VAR;
+                c.off = (Math.random() * 2 - 1) * 3; // 遠くにいるうちは少し横に散らばって走る
+                c.skill = lerp(SKILL_MIN, SKILL_MAX, Math.random());
+                c.tripCool = 0;
+                c.canCatch = false;
+                writePose(c, c.p, initial ? 'ready' : 'run', 0);
+                c.q.set(c.p);
+                if (!initial) {
+                    for (let n = 0; n < NP; n++) c.q[n * 3 + 2] -= c.v * STEP;
+                }
+            }
+
+            const cheeseHeight = () =>
+            cheese.y - CHEESE_R - ground(cheese.x, cheese.s);
+
+            function updateCheese(dt) {
+                const c = cheese;
+                if (c.held) {
+                    // 捕まえた人の手と一緒に転がる
+                    const p = c.held.p,
+                        k = c.hand * 3;
+                    c.x = p[k];
+                    c.y = p[k + 1];
+                    c.s = p[k + 2];
+                    return;
+                }
+                if (game === 'playing') {
+                    // 急な坂でよくはねるので、浮いている間も少しは操作が効くようにする
+                    const k = c.grounded ? 1 : AIR_CONTROL;
+                    const {
+                        x: ix,
+                        y: iy
+                    } = input();
+                    c.vx += clamp(ix * VX_MAX - c.vx, -LAT_ACC * k * dt, LAT_ACC * k * dt); // 横に倒した分だけの速さで横へ
+                    // 上に倒すと押して加速、下に倒すとブレーキ（ブレーキで後ろへは戻らない）
+                    if (iy > 0) c.v += iy * PUSH_ACC * k * dt;
+                    else if (iy < 0) c.v = Math.max(Math.min(c.v, 0), c.v + iy * BRAKE_ACC * k * dt);
+                    // Zキーを押している間は前進方向へ追加加速する
+                    if (keys.boost) c.v += BOOST_ACC * k * dt;
+                    if (c.grounded) {
+                        c.vx -= c.tilt * TILT_DRIFT * dt; // 傾くとその方へ曲がる
+                        c.v -= TURN_COST * Math.abs(c.vx) * dt;
+                    }
+                    c.v = Math.max(-3, c.v + (G_ALONG - DRAG * c.v * Math.abs(c.v)) * dt); // 障害物にはね返されると少し戻ることもある
+                    if (cheeseHeight() < 0.5 && inBush(c.x, c.s)) c.v = Math.max(Math.min(c.v, 0), c.v - BUSH_DRAG * dt);
+                }
+                c.s += c.v * dt;
+                c.x += c.vx * dt;
+                if (game === 'playing') cheeseObstacles(c);
+                if (c.x < - XLIM) {
+                    c.x = -XLIM;
+                    c.vx = Math.max(0, c.vx);
+                }
+                if (c.x > XLIM) {
+                    c.x = XLIM;
+                    c.vx = Math.min(0, c.vx);
+                }
+                c.vy -= G * dt;
+                c.y += c.vy * dt;
+                const gy = ground(c.x, c.s) + CHEESE_R;
+                if (c.y <= gy) {
+                    // 地面の上下の動きに合わせる。強く当たったときだけはねて、傾きと向きが乱れる
+                    const gvy = slopeS(c.x, c.s) * c.v + slopeX(c.x, c.s) * c.vx;
+                    const hit = gvy - c.vy;
+                    if (hit > BOUNCE_MIN) {
+                        c.vy = gvy + hit * BOUNCE;
+                        c.tiltV += (Math.random() - 0.5) * hit * TILT_KICK * 4;
+                        if (game === 'playing') c.vx += (Math.random() - 0.5) * hit * 0.3;
+                    } else {
+                        c.vy = gvy;
+                    }
+                    c.y = gy;
+                    c.grounded = true;
+                } else if (c.y - gy > 0.03) {
+                    c.grounded = false;
+                }
+                c.tiltV += (-TILT_SPRING * c.tilt - TILT_DAMP * c.tiltV) * dt;
+                c.tilt = clamp(c.tilt + c.tiltV * dt, -0.6, 0.6);
+                c.rot = (c.rot + c.v / CHEESE_R * dt) % TAU;
+            }
+
+            function caught(c, hand) {
+                game = 'caught';
+                endJoy();
+                overT = 0;
+                cheese.held = c;
+                cheese.hand = hand;
+                cheese.v = cheese.vx = cheese.vy = 0;
+                for (const o of chasers)
+                    if (o !== c &&
+                        (o.state === 'run' || o.state === 'windup' || o.state === 'wait')) o.state = 'idle';
+            }
+
+            const _d3 = (p, i, x, y, s) =>
+            Math.hypot(p[i * 3] - x, p[i * 3 + 1] - y, p[i * 3 + 2] - s);
+
+            function launch(c) {
+                // かまえ終わりの時点でチーズの行き先を先読みし、そこへ手が届くように飛ぶ
+                c.state = 'rag';
+                c.t = 0;
+                c.canCatch = true;
+                writePose(c, c.p, 'reach', 0);
+                const ts = cheese.s + cheese.v * DIVE_T,
+                    tx = clamp(cheese.x + cheese.vx * DIVE_T * AIM, -HALF_W + 0.5, HALF_W - 0.5);
+                const dx = tx - c.x,
+                    ds = ts - c.s,
+                    dl = Math.hypot(dx, ds) || 1;
+                const px = tx - dx / dl * DIVE_REACH,
+                    ps = ts - ds / dl * DIVE_REACH;
+                const p = c.p,
+                    k = PELVIS * 3;
+                const vx = (px - p[k]) / DIVE_T,
+                    vs = (ps - p[k + 2]) / DIVE_T;
+                const vy = (ground(px, ps) + 0.35 - p[k + 1]) / DIVE_T + 0.5 * G * DIVE_T;
+                // 飛ぶ向きの右まわりに前へ倒れる回転を足す
+                const rx = ds / dl,
+                    rs = -dx / dl;
+                for (let i = 0; i < NP; i++) {
+                    const ox = p[i * 3] - p[k],
+                        oy = p[i * 3 + 1] - p[k + 1],
+                        os = p[i * 3 + 2] - p[k + 2];
+                    // ω × r（ω = 右 × DIVE_SPIN）
+                    const wx = DIVE_SPIN * rx,
+                        ws = DIVE_SPIN * rs;
+                    const rvx = -ws * oy,
+                        rvy = ws * ox - wx * os,
+                        rvs = wx * oy;
+                    c.q[i * 3] = p[i * 3] - (vx + rvx) * STEP;
+                    c.q[i * 3 + 1] = p[i * 3 + 1] - (vy + rvy) * STEP;
+                    c.q[i * 3 + 2] = p[i * 3 + 2] - (vs + rvs) * STEP;
+                }
+            }
+
+            function updateChaser(c, dt) {
+                const behind = cheese.s - c.s;
+                c.cool -= dt;
+                switch (c.state) {
+                    case 'wait':
+                        c.t += dt;
+                        setPose(c, 'ready', 0);
+                        if (c.t >= START_DELAY) {
+                            c.state = 'run';
+                            c.t = 0;
+                        }
+                        break;
+                    case 'run':
+                    case 'windup': {
+                        let target = Math.min(RUN_MAX0 + S0 * RUN_MAX_GROW, Math.max(cheese.v, 3) + GAIN0 + S0 * GAIN_GROW) + c.vary;
+                        if (behind > CATCHUP_DIST) target += CATCHUP;
+                        if (behind < 0.4) target = Math.min(target, cheese.v);
+                        if (inBush(c.x, c.s)) target *= BUSH_RUN;
+                        target = Math.max(0, target);
+                        c.v += clamp(target - c.v, -RUN_ACC * dt, RUN_ACC * dt);
+                        const want = avoidX(c, cheese.x + c.off * clamp((behind - 2) / 8, 0, 1));
+                        const tvx = clamp((want - c.x) * 3, -CH_VX, CH_VX);
+                        c.vx += clamp(tvx - c.vx, -15 * dt, 15 * dt);
+                        c.s += c.v * dt;
+                        c.x = clamp(c.x + c.vx * dt, -HALF_W + 0.5, HALF_W - 0.5);
+                        c.yaw = Math.atan2(c.vx, Math.max(c.v, 1)) * 0.8;
+                        c.freq = clamp(c.v * 0.32, 1.2, 3.0);
+                        c.phase += c.freq * dt;
+                        c.tripCool -= dt;
+                        if (c.tripCool <= 0 && obstacles.some(o => tripTest(o, c.x, c.s))) {
+                            trip(c);
+                            break;
+                        }
+                        if (c.state === 'run') {
+                            setPose(c, 'run', 0);
+                            if (game === 'playing' && c.cool <= 0 && behind > - DIVE_BACK && behind < DIVE_RANGE && Math.abs(cheese.x - c.x) < DIVE_DX && cheeseHeight() < CATCH_HEIGHT) {
+                                c.state = 'windup';
+                                c.t = 0;
+                            }
+                        } else {
+                            c.t += dt;
+                            setPose(c, 'crouch', Math.min(1, c.t / WINDUP));
+                            if (c.t >= WINDUP) launch(c);
+                        }
+                        break;
+                    }
+                    case 'rag': {
+                        c.t += dt;
+                        ragStep(c, dt, c.t < DIVE_T * 0.9 && cheese.held !== c);
+                        const p = c.p,
+                            k = PELVIS * 3;
+                        c.x = p[k];
+                        c.s = p[k + 2];
+                        c.v = (p[k + 2] - c.q[k + 2]) / dt;
+                        if (game === 'playing' && c.canCatch && c.t < CATCH_WINDOW && cheeseHeight() < CATCH_HEIGHT) {
+                            const X = cheese.x,
+                                Y = cheese.y,
+                                S = cheese.s;
+                            const dl = _d3(p, HNL, X, Y, S),
+                                dr = _d3(p, HNR, X, Y, S);
+                            const body = Math.min(_d3(p, NECK, X, Y, S), _d3(p, PELVIS, X, Y, S), _d3(p, SHL, X, Y, S), _d3(p, SHR, X, Y, S));
+                            if (Math.min(dl, dr) < CATCH_HAND || body < CATCH_BODY) {
+                                caught(c, dl < dr ? HNL : HNR);
+                                break;
+                            }
+                        }
+                        const sp = Math.hypot(p[k] - c.q[k], p[k + 1] - c.q[k + 1], p[k + 2] - c.q[k + 2]) / dt;
+                        if (cheese.held !== c && c.t > RAG_MIN &&
+                            (sp < RAG_STILL || c.t > RAG_MAX)) {
+                            // 起き上がり：今の体の形から、その場の立ち姿勢へ寄せていく
+                            c.state = 'getup';
+                            c.t = 0;
+                            c.a.set(p);
+                            c.s0 = c.s;
+                            c.x0 = c.x;
+                            c.g0 = ground(c.x, c.s);
+                            c.v = Math.max(0, Math.min(c.v, 4));
+                            c.vx = 0;
+                            c.yaw = 0;
+                            c.phase = 0;
+                        }
+                        break;
+                    }
+                    case 'getup': {
+                        c.t += dt;
+                        c.v += (3 - c.v) * Math.min(1, 3 * dt);
+                        c.s += c.v * dt;
+                        c.freq = clamp(c.v * 0.32, 1.2, 3.0);
+                        c.phase += c.freq * dt;
+                        c.q.set(c.p);
+                        writePose(c, c.p, 'run', 0);
+                        const k = smooth(Math.min(1, c.t / GETUP_T));
+                        const dS = c.s - c.s0,
+                            dX = c.x - c.x0,
+                            dY = ground(c.x, c.s) - c.g0;
+                        for (let i = 0; i < NP; i++) {
+                            c.p[i * 3] = lerp(c.a[i * 3] + dX, c.p[i * 3], k);
+                            c.p[i * 3 + 1] = lerp(c.a[i * 3 + 1] + dY, c.p[i * 3 + 1], k);
+                            c.p[i * 3 + 2] = lerp(c.a[i * 3 + 2] + dS, c.p[i * 3 + 2], k);
+                        }
+                        if (c.t >= GETUP_T) {
+                            c.state = game === 'playing' ? 'run' : 'idle';
+                            c.t = 0;
+                            c.cool = COOLDOWN;
+                            c.tripCool = TRIP_COOL;
+                        }
+                        break;
+                    }
+                    case 'idle':
+                        c.v = Math.max(0, c.v - 8 * dt);
+                        if (behind < 1.5 && Math.abs(cheese.x - c.x) < 1) c.v = 0;
+                        c.s += c.v * dt;
+                        c.freq = clamp(c.v * 0.32, 1.2, 3.0);
+                        c.phase += c.freq * dt;
+                        setPose(c, 'run', 0);
+                        break;
+                }
+                // 大きく遅れた人は後ろから走り直す
+                if (game === 'playing' && behind > RESPAWN_BEHIND && cheese.held !== c) resetChaser(c, 0, false);
+            }
+
+            function separate() {
+                // 走っている人同士が重ならないよう横に押し分ける
+                const moving = s =>
+                s === 'run' || s === 'windup' || s === 'idle';
+                for (let i = 0; i < activeN; i++)
+                    for (let j = i + 1; j < activeN; j++) {
+                        const a = chasers[i],
+                            b = chasers[j];
+                        if (!moving(a.state) || !moving(b.state)) continue;
+                        const ds = a.s - b.s,
+                            dx = a.x - b.x;
+                        if (Math.abs(ds) < 0.8 && Math.abs(dx) < 0.6) {
+                            const push = (0.6 - Math.abs(dx)) * 0.5 * (dx >= 0 ? 1 : -1);
+                            a.x = clamp(a.x + push, -HALF_W + 0.5, HALF_W - 0.5);
+                            b.x = clamp(b.x - push, -HALF_W + 0.5, HALF_W - 0.5);
+                        }
+                    }
+            }
+
+            function step(dt) {
+                updateObstacles();
+                updateCheese(dt);
+                if (game === 'playing') {
+                    const n = Math.min(CH_MAX, CH_START + Math.floor(cheese.s / CH_ADD_EVERY));
+                    while (activeN < n) {
+                        const c = chasers[activeN++];
+                        resetChaser(c, 0, false);
+                        c.active = true;
+                    }
+                }
+                for (let i = 0; i < activeN; i++) updateChaser(chasers[i], dt);
+                separate();
+                if (cheese.held) updateCheese(dt);
+                recordTrail();
+                S0 = cheese.s;
+                if (game === 'playing') maxDist = Math.max(maxDist, S0);
+            }
+
+            // ---------- 描画 ----------
+            const RP = Array.from({
+                length: NP
+            }, () => new THREE.Vector3());
+            const _m = new THREE.Matrix4(),
+                _x = new THREE.Vector3(),
+                _y = new THREE.Vector3(),
+                _z = new THREE.Vector3();
+            const _right = new THREE.Vector3(),
+                _up = new THREE.Vector3(),
+                _back = new THREE.Vector3(),
+                _c = new THREE.Vector3();
+
+            function drawChaser(c, idx) {
+                for (let i = 0; i < NP; i++) rel(RP[i], c.p[i * 3 + 2], c.p[i * 3], c.p[i * 3 + 1]);
+                // 胴の向き（右・上・後ろ）
+                _up.subVectors(RP[NECK], RP[PELVIS]).normalize();
+                _right.subVectors(RP[SHR], RP[SHL]).add(_c.subVectors(RP[HPR], RP[HPL]));
+                _right.addScaledVector(_up, -_right.dot(_up)).normalize();
+                _back.crossVectors(_right, _up);
+                CYL.forEach(([a, b, , ra, rb], j) => {
+                    _y.subVectors(RP[b], RP[a]);
+                    const len = _y.length() || 1e-4;
+                    _y.divideScalar(len);
+                    _x.copy(_right).addScaledVector(_y, -_right.dot(_y));
+                    if (_x.lengthSq() < 1e-4) _x.copy(_back).addScaledVector(_y, -_back.dot(_y));
+                    _x.normalize();
+                    _z.crossVectors(_x, _y);
+                    _m.makeBasis(_x.multiplyScalar(ra), _y.multiplyScalar(len), _z.multiplyScalar(rb));
+                    _m.setPosition(_c.addVectors(RP[a], RP[b]).multiplyScalar(0.5));
+                    cylMesh.setMatrixAt(idx * CYL.length + j, _m);
+                });
+                SPH.forEach(([a, key, sx, sy, sz], j) => {
+                    _c.copy(RP[a]);
+                    _x.copy(_right);
+                    _y.copy(_up);
+                    _z.copy(_back);
+                    if (key === 'hair') {
+                        _c.addScaledVector(_up, 0.025).addScaledVector(_back, 0.012);
+                    }
+                    if (key === 'shoe') {
+                        // 靴は脛に直角で、胴の前の方へ向ける
+                        const kn = a === FTL ? KNL : KNR;
+                        _y.subVectors(RP[kn], RP[a]).normalize();
+                        _z.copy(_back).addScaledVector(_y, -_back.dot(_y));
+                        if (_z.lengthSq() < 1e-4) _z.copy(_up);
+                        _z.normalize();
+                        _x.crossVectors(_y, _z);
+                        _c.addScaledVector(_z, -0.05).addScaledVector(_y, -0.03);
+                    }
+                    _m.makeBasis(_x.multiplyScalar(sx), _y.multiplyScalar(sy), _z.multiplyScalar(sz));
+                    _m.setPosition(_c);
+                    sphMesh.setMatrixAt(idx * SPH.length + j, _m);
+                });
+            }
+
+            let camX = 0,
+                zoom = 0;
+            const _camP = new THREE.Vector3(),
+                _camL = new THREE.Vector3(),
+                _zP = new THREE.Vector3(),
+                _zL = new THREE.Vector3();
+
+            function draw(dt) {
+                updateChunks();
+                updateFence();
+                drawObstacles();
+
+                // チーズ
+                rel(cheeseGroup.position, cheese.s, cheese.x, cheese.y);
+                if (!cheese.held) {
+                    cheeseGroup.rotation.y = -Math.atan2(cheese.vx, Math.max(cheese.v, 1));
+                    cheeseGroup.rotation.x = Math.atan(slopeS(cheese.x, cheese.s));
+                    cheeseGroup.rotation.z = -cheese.vx / VX_MAX * 0.3 + cheese.tilt;
+                }
+                cheeseSpin.rotation.x = -cheese.rot;
+
+                for (let i = 0; i < activeN; i++) drawChaser(chasers[i], i);
+                cylMesh.count = activeN * CYL.length;
+                sphMesh.count = activeN * SPH.length;
+                cylMesh.instanceMatrix.needsUpdate = sphMesh.instanceMatrix.needsUpdate = true;
+
+                // カメラ：坂の面に沿って後ろ上から見下ろす（でこぼこには合わせず揺れないようにする）
+                camX += (cheese.x * CAM_FOLLOW_X - camX) * Math.min(1, dt * 4);
+                const camY = cheese.y + SLOPE * S0 - bump(cheese.x, cheese.s); // チーズが浮いたぶんだけ少し付いていく
+                _camP.set(camX, SLOPE * CAM_BACK + CAM_UP + camY * 0.3, CAM_BACK);
+                _camL.set(camX, -SLOPE * CAM_LOOK + camY * 0.3, -CAM_LOOK);
+                // 捕まったらチーズにズームアップする
+                zoom += ((game === 'playing' ? 0 : 1) - zoom) * Math.min(1, dt * ZOOM_SPEED);
+                if (zoom > 0.001) {
+                    rel(_zL, cheese.s, cheese.x, cheese.y);
+                    _zP.set(_zL.x + ZOOM_SIDE, ground(cheese.x, cheese.s - ZOOM_BACK) + SLOPE * S0 + ZOOM_UP, _zL.z + ZOOM_BACK);
+                    const k = smooth(zoom);
+                    _camP.lerp(_zP, k);
+                    _camL.lerp(_zL, k);
+                }
+                camera.position.copy(_camP);
+                camera.lookAt(_camL);
+                drawTrail(dt);
+
+                // 日差し：影の範囲をチーズの周りに合わせる
+                sun.target.position.set(camX, 0, -2);
+                sun.position.set(camX - 6, 16, -10);
+
+                const d = Math.floor(maxDist);
+                if (d !== shownDist) {
+                    shownDist = d;
+                    $('hud').textContent = `${d} m`;
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            // ---------- ループ ----------
+            let last = performance.now(),
+                acc = 0;
+
+            function loop(now) {
+                const dt = Math.min((now - last) / 1000, 1 / 30);
+                last = now;
+                // 捕まったらスローにする（結果が出るまでの時間は実際の時間で数える）
+                acc += dt * (game === 'playing' ? 1 : SLOW_SCALE);
+                while (acc >= STEP) {
+                    step(STEP);
+                    acc -= STEP;
+                }
+                if (game === 'caught') {
+                    overT += dt;
+                    if (overT >= OVER_DELAY) showOver();
+                }
+                draw(dt);
+                requestAnimationFrame(loop);
+            }
+
+            // ---------- 開始・結果 ----------
+            function reset() {
+                Object.assign(cheese, {
+                    s: 0,
+                    x: 0,
+                    y: ground(0, 0) + CHEESE_R,
+                    v: 0,
+                    vx: 0,
+                    vy: 0,
+                    rot: 0,
+                    tilt: 0,
+                    tiltV: 0,
+                    grounded: true,
+                    held: null,
+                    hand: 0
+                });
+                S0 = 0;
+                maxDist = 0;
+                camX = 0;
+                zoom = 0;
+                trail.length = 0;
+                trailK = 0;
+                overT = 0;
+                acc = 0;
+                shownDist = -1;
+                endJoy();
+                keys.boost = false;
+                activeN = CH_START;
+                chasers.forEach((c, i) => {
+                    resetChaser(c, i, true);
+                    c.active = i <
+                    CH_START;
+                });
+                for (const ch of chunks) ch.k = null;
+                clearObstacles();
+                $('result').classList.remove('new');
+                $('best-line').classList.remove('new');
+                game = 'playing';
+                // プレイ中は「遊び方」ボタンを押せないように隠す
+                document.documentElement.setAttribute('data-howto-hidden', '');
+                $('over').classList.add('hidden');
+                $('share-view').classList.add('hidden');
+            }
+
+            function showOver() {
+                game = 'over';
+                const d = Math.floor(maxDist);
+                $('result').textContent = `${d} m`;
+                const isNew = d >
+                best;
+                if (isNew) {
+                    best = d;
+                    saveBest(d);
+                }
+                $('best-line').textContent = isNew ? '最高記録更新' : `最高記録 ${best} m`;
+                $('best-line').classList.toggle('new', isNew);
+                $('result').classList.toggle('new', isNew);
+                $('over').classList.remove('hidden');
+                // 結果を出すときだけ「遊び方」ボタンを出す
+                document.documentElement.removeAttribute('data-howto-hidden');
+                $('retry').focus({
+                    preventScroll: true
+                });
+            }
+            $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+            $('retry').addEventListener('click', reset);
+
+            // ---------- 共有 ----------
+            const SHARE_INSTANT = 0.5; // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+            const shareText = () =>
+            `チーズが${Math.floor(maxDist)}m逃げた\n${location.href.split(/[?#]/)[0]}\n#転がりチーズ`;
+
+            function resultCanvas() {
+                // 捕まった場面をそのまま画像にする（描いた直後に読むので同期で取れる）
+                renderer.render(scene, camera);
+                const c = document.createElement('canvas');
+                c.width = c.height = 720;
+                const g = c.getContext('2d');
+                const sw = cv.width,
+                    sh = cv.height,
+                    side = Math.min(sw, sh);
+                g.drawImage(cv, (sw - side) / 2, (sh - side) / 2, side, side, 0, 0, 720, 720);
+                g.fillStyle = 'rgba(0,0,0,.55)';
+                g.fillRect(0, 560, 720, 160);
+                g.fillStyle = '#fff';
+                g.font = `800 96px ${getComputedStyle(document.body).fontFamily}`;
+                g.textAlign = 'center';
+                g.textBaseline = 'middle';
+                g.fillText(`${Math.floor(maxDist)} m`, 360, 642);
+                return c;
+            }
+
+            function resultImageFile(c) {
+                const bin = atob(c.toDataURL('image/png').split(',')[1]); // toBlob の非同期コールバックは避ける
+                const buf = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                return new File([buf], 'result.png', {
+                    type: 'image/png'
+                });
+            }
+            $('share').addEventListener('pointerdown', e => e.stopPropagation());
+            $('share').addEventListener('click', () => {
+                const text = shareText();
+                const c = resultCanvas();
+                const file = resultImageFile(c);
+                // 3) 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+                const fallback = () => {
+                    navigator.clipboard?.writeText(text).catch(() => {});
+                    $('share-img').src = c.toDataURL('image/png');
+                    $('share-text').textContent = text;
+                    $('share-view').classList.remove('hidden');
+                    $('share-close').focus({
+                        preventScroll: true
+                    });
+                };
+                // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなして 3) へ
+                const shareStart = performance.now();
+                const failed = err => {
+                    const instant = performance.now() - shareStart <
+                    SHARE_INSTANT * 1000;
+                    if (!err || err.name !== 'AbortError' || instant) fallback();
+                };
+                // 1) 画像を渡せる共有シート：文面＋結果画像
+                if (navigator.canShare && navigator.canShare({
+                        files: [file]
+                    })) {
+                    navigator.share({
+                        text,
+                        files: [file]
+                    }).catch(failed);
+                    return;
+                }
+                // 2) 画像を渡せない共有シート：文面のみ
+                if (navigator.share) {
+                    navigator.share({
+                        text
+                    }).catch(failed);
+                    return;
+                }
+                fallback();
+            });
+            const shareOpen = () =>
+            !$('share-view').classList.contains('hidden');
+            const closeShareView = () => {
+                $('share-view').classList.add('hidden');
+                $('share').focus({
+                    preventScroll: true
+                });
+            };
+            $('share-close').addEventListener('click', closeShareView);
+            $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+
+            // ---------- 操作 ----------
+            // ジョイスティック：画面のどこでも、触った所に出る。指を離すと消えて元に戻る
+            let dragId = null,
+                joyX0 = 0,
+                joyY0 = 0;
+
+            function input() {
+                if (dragId !== null) {
+                    const m = Math.hypot(stick.x, stick.y);
+                    return m <
+                    JOY_DEAD ? {
+                        x: 0,
+                        y: 0
+                    } : stick;
+                }
+                return {
+                    x: (keys.right ? 1 : 0) - (keys.left ? 1 : 0),
+                    y: (keys.up ? 1 : 0) - (keys.down ? 1 : 0)
+                };
+            }
+
+            function endJoy() {
+                dragId = null;
+                stick.x = stick.y = 0;
+                $('joy').classList.add('hidden');
+            }
+            cv.addEventListener('pointerdown', e => {
+                if (game !== 'playing' || dragId !== null) return;
+                e.preventDefault();
+                cv.setPointerCapture(e.pointerId);
+                dragId = e.pointerId;
+                const g = $('game').getBoundingClientRect();
+                joyX0 = e.clientX - g.left;
+                joyY0 = e.clientY - g.top;
+                $('joy').style.left = joyX0 + 'px';
+                $('joy').style.top = joyY0 + 'px';
+                $('knob').style.transform = '';
+                $('joy').classList.remove('hidden');
+            });
+            cv.addEventListener('pointermove', e => {
+                if (e.pointerId !== dragId) return;
+                const g = $('game').getBoundingClientRect();
+                let dx = e.clientX - g.left - joyX0,
+                    dy = e.clientY - g.top - joyY0;
+                const m = Math.hypot(dx, dy);
+                if (m > JOY_R) {
+                    dx *= JOY_R / m;
+                    dy *= JOY_R / m;
+                }
+                stick.x = dx / JOY_R;
+                stick.y = -dy / JOY_R;
+                $('knob').style.transform = `translate(${dx}px, ${dy}px)`;
+            });
+            const endDrag = e => {
+                if (e.pointerId === dragId) endJoy();
+            };
+            cv.addEventListener('pointerup', endDrag);
+            cv.addEventListener('pointercancel', endDrag);
+
+            // howto.js は読み込み時に section の hidden を外すので、開いているかはダイアログの open で見る
+            const howtoOpen = () =>
+            !!document.querySelector('.howto-dialog[open]');
+            document.addEventListener('keydown', e => {
+                if (shareOpen()) {
+                    if (e.key === 'Escape') closeShareView();
+                    return;
+                }
+                // 遊び方を開いている間は、裏の結果画面のキー操作（もう一回）を止める
+                if (howtoOpen()) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+                if (e.key === 'ArrowUp' || e.key === 'w') keys.up = true;
+                if (e.key === 'ArrowDown' || e.key === 's') keys.down = true;
+                if (e.key.toLowerCase() === 'z') {
+                    keys.boost = true;
+                    e.preventDefault();
+                }
+                if (game === 'over' &&
+                    (e.key === ' ' || e.key === 'Enter') && !(e.target instanceof HTMLButtonElement)) {
+                    e.preventDefault();
+                    reset();
+                }
+            });
+            document.addEventListener('keyup', e => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+                if (e.key === 'ArrowUp' || e.key === 'w') keys.up = false;
+                if (e.key === 'ArrowDown' || e.key === 's') keys.down = false;
+                if (e.key.toLowerCase() === 'z') keys.boost = false;
+            });
+            addEventListener('blur', () => {
+                keys.left = keys.right = keys.up = keys.down = keys.boost = false;
+            });
+
+            // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+            document.addEventListener('touchstart', e => {
+                if (e.target === cv) e.preventDefault();
+            }, {
+                passive: false
+            });
+            document.addEventListener('touchmove', e => {
+                if (dragId !== null) e.preventDefault();
+            }, {
+                passive: false
+            });
+            document.addEventListener('selectstart', e => {
+                if (e.target instanceof Element && e.target.closest('#share-text')) return;
+                e.preventDefault();
+            });
+            document.addEventListener('contextmenu', e => {
+                if (e.target === cv) e.preventDefault();
+            });
+            // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', e => {
+                // ボタンは除く（連打が効かなくなるため）
+                if (e.target instanceof Element && e.target.closest('button')) return;
+                const now = Date.now();
+                if (now - lastTouchEnd < 350) e.preventDefault();
+                lastTouchEnd = now;
+            }, {
+                passive: false
+            });
+
+            // ---------- 画面サイズ ----------
+            function resize() {
+                const w = $('game').clientWidth,
+                    h = $('game').clientHeight;
+                renderer.setSize(w, h);
+                camera.aspect = w / h;
+                // 縦長の画面でも横が見えるよう、横の画角を基準に縦の画角を決める
+                const vfov = 2 * Math.atan(Math.tan(CAM_HFOV / 2 * Math.PI / 180) / camera.aspect) * 180 / Math.PI;
+                camera.fov = clamp(vfov, 50, CAM_VFOV_MAX);
+                camera.updateProjectionMatrix();
+            }
+            resize();
+            addEventListener('resize', resize);
+
+            reset();
+            requestAnimationFrame(loop);
+        })();
+    </script>
+    <script src="/common/js/howto.js" defer=""></script>
+    <script src="/common/js/result-ad.js" defer=""></script>
+
+
+    <dialog class="howto-dialog" aria-label="遊び方">
+        <section class="howto" data-pos="top-left">
+            <h2>遊び方</h2>
+            <p>坂を転がり落ちるチーズを操って、後ろから追いかけてくる人たちから逃げるゲームです。追っ手は近づくと飛びついてきて、チーズをつかまれたら終わりです。逃げた距離が記録になり、100m進むごとに追っ手が1人ずつ増えます。</p>
+            <h2>操作</h2>
+            <p>画面のどこかに指を置くとジョイスティックが出ます。左右に倒すとチーズが左右に動き、上に倒すと加速、下に倒すとブレーキがかかります。PC では矢印キーか WASD キーで同じように操作できます。</p>
+            <h2>コツ</h2>
+            <p>岩や丸太、干し草に当たるとチーズははね返って遅くなりますが、追っ手もつまずいて転ぶことがあります。茂みはチーズも追っ手も遅くします。チーズが高くはねている間はつかまれません。加速だけでは追っ手を振り切れないので、障害物をうまく使いましょう。</p>
+            <p class="howto-home"><a href="/">ゲーム一覧</a></p>
+        </section><button type="button" class="howto-close">閉じる</button>
+    </dialog>
+</body>
+
+</html>
